@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'application'
 }
 
 group = 'com.sd56'
@@ -12,6 +13,23 @@ repositories {
 dependencies {
     testImplementation platform('org.junit:junit-bom:5.9.1')
     testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+application {
+    // Aqui podemos dizer qual é a classe que é suposto ser a main, e deste modo corre com `gradlew run`... no nosso caso acho que não temos, de todas as maneiras segue um exemplo
+    // mainClass = 'com.sd56.server.Server'
+}
+
+tasks.register('runServer', JavaExec) {
+    mainClass.set('com.sd56.server.Server')
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+}
+
+tasks.register('runClient', JavaExec) {
+    mainClass.set('com.sd56.client.Client')
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
 }
 
 test {
