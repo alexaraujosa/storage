@@ -1,12 +1,15 @@
 package com.sd56.server;
 
 import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 
 import com.sd56.common.datagram.Datagram;
+import com.sd56.common.datagram.RequestAuthDatagram;
+import com.sd56.common.datagram.ResponseAuthDatagram;
 
 class DatabaseManager {
     private HashMap<String, byte[]> db = new HashMap<>();
@@ -31,9 +34,28 @@ class ClientHandler implements Runnable {
 
         try{
             DataInputStream in = new DataInputStream(socket.getInputStream());
+            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
             while (!socket.isInputShutdown()) {
                 Datagram datagram = Datagram.deserialize(in);
-                System.out.println("Received: " + datagram.toString());
+            
+                switch (datagram.getType()) {
+                    case DATAGRAM_TYPE_REQUEST_AUTHENTICATION: 
+                        RequestAuthDatagram reqAuth = RequestAuthDatagram.deserialize(in, datagram);
+                        //TODO: Boolean validation = DatabaseManager -> verify credencials
+                        Boolean validation = false; // TEMPORARY PURPOSES
+                        ResponseAuthDatagram resAuth = new ResponseAuthDatagram(validation);
+                        resAuth.serialize(out);
+                        break;
+                    case DATAGRAM_TYPE_REQUEST_PUT:
+                        //TODO
+                        break;
+                    case DATAGRAM_TYPE_REQUEST_GET:
+                        //TODO
+                        break;
+                    default:
+                        // Ignore it ig?
+                        break;
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
