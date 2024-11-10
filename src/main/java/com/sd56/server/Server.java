@@ -2,6 +2,7 @@ package com.sd56.server;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -42,7 +43,7 @@ class ClientHandler implements Runnable {
                     case DATAGRAM_TYPE_REQUEST_AUTHENTICATION: 
                         RequestAuthDatagram reqAuth = RequestAuthDatagram.deserialize(in, datagram);
                         //TODO: Boolean validation = DatabaseManager -> verify credencials
-                        Boolean validation = false; // TEMPORARY PURPOSES
+                        Boolean validation = true; // TEMPORARY PURPOSES
                         ResponseAuthDatagram resAuth = new ResponseAuthDatagram(validation);
                         resAuth.serialize(out);
                         break;
@@ -57,6 +58,8 @@ class ClientHandler implements Runnable {
                         break;
                 }
             }
+        } catch (EOFException e) {
+            System.out.println("A conexão foi encerrada, já não há mais nada a ler!");;
         } catch (IOException e) {
             e.printStackTrace();
         }
