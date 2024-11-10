@@ -47,20 +47,4 @@ public class TextUI {
         client.authenticate(username, password);
     }
 
-
-    private void alterarNomeEmpresa() {
-    }
-
-    private void addVeiculo() {
-
-    }
-
-    private void listVeiculo() {
-
-    }
-
-    private void remVeiculo() {
-
-    }
-
 }
