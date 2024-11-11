@@ -8,24 +8,19 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.sd56.common.datagram.*;
 
 class DatabaseManager {
     private HashMap<String, String> users;
     private HashMap<String, byte[]> db;
+    private ReentrantLock lock;
 
     public DatabaseManager(){
         this.users = new HashMap<>();
         this.db = new HashMap<>();
-    }
-
-    public void setUsers(HashMap<String, String> users){
-        this.users = users;
-    }
-
-    public HashMap<String, String> getUsers() {
-        return this.users;
+        this.lock = new ReentrantLock();
     }
 
     /*
@@ -41,37 +36,52 @@ class DatabaseManager {
 
     public boolean login(String username, String password){
         boolean login = false;
-        if(!this.users.containsKey(username)){
-            // caso em que o user ainda nao fez registo
-            this.users.put(username,password);
-            login = true;
-        } else {
-            // caso em que o user ja fez registo
-
-            if(this.users.get(username).equals(password)){
-            // password correta
+        try {
+            lock.lock();
+            if (!this.users.containsKey(username)) {
+                // caso em que o user ainda nao fez registo
+                this.users.put(username, password);
                 login = true;
+            } else {
+                // caso em que o user ja fez registo
+
+                if (this.users.get(username).equals(password)) {
+                    // password correta
+                    login = true;
+                }
             }
+        } finally {
+            lock.unlock();
         }
         return login;
     }
 
 
-    public void setDb(HashMap<String, byte[]> db) {
+    void setDb(HashMap<String, byte[]> db) {
         this.db = db;
     }
 
-    public HashMap<String, byte[]> getDb() {
+    HashMap<String, byte[]> getDb() {
         return this.db;
     }
 
     public void put(String key, byte[] value){
-        this.db.put(key,value);
+        try {
+            lock.lock();
+            this.db.put(key, value);
+        } finally {
+            lock.unlock();
+        }
         // mesmo que a chave ja exista, o valor e atualizado automaticamente
     }
 
     public byte[] get(String key){
-        return this.db.get(key);
+        try {
+            lock.lock();
+            return this.db.get(key);
+        } finally {
+            lock.unlock();
+        }
     }
 }
 
