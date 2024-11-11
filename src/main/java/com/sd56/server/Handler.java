@@ -31,7 +31,7 @@ public class Handler implements Runnable {
                 switch (datagram.getType()) {
                     case DATAGRAM_TYPE_REQUEST_AUTHENTICATION:
                         RequestAuthDatagram reqAuth = RequestAuthDatagram.deserialize(in, datagram);
-                        Boolean authValidation = server.getDbManager().login(reqAuth.getUsername(), reqAuth.getPassword());
+                        Boolean authValidation = server.getDbManager().authentication(reqAuth.getUsername(), reqAuth.getPassword());
                         ResponseAuthDatagram resAuth = new ResponseAuthDatagram(authValidation);
                         resAuth.serialize(out);
                         break;

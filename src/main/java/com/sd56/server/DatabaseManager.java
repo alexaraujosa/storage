@@ -4,74 +4,50 @@ import java.util.HashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class DatabaseManager {
-    private HashMap<String, String> users;
-    private HashMap<String, byte[]> db;
-    private ReentrantLock lock;
+    private final HashMap<String, String> users;
+    private final HashMap<String, byte[]> db;
+    private final ReentrantLock l;
 
     public DatabaseManager(){
         this.users = new HashMap<>();
         this.db = new HashMap<>();
-        this.lock = new ReentrantLock();
+        this.l = new ReentrantLock();
     }
 
-    /*
-    // caso queiramos o registo separado do login
-    public void addUser(String username , String password){
-        if(!this.users.containsKey(username)){
-            this.users.put(username,password);
-        } else {
-            // throw new Exception(User already exists);
-        }
-    }
-     */
+    public HashMap<String, byte[]> getDb() { return this.db; }
 
-    public boolean login(String username, String password){
-        boolean login = false;
+    public boolean authentication(String username, String password) {
+        l.lock();
         try {
-            lock.lock();
-            if (!this.users.containsKey(username)) {
-                // caso em que o user ainda nao fez registo
-                this.users.put(username, password);
-                login = true;
-            } else {
-                // caso em que o user ja fez registo
+            // Wrong password
+            if (users.containsKey(username) && !users.get(username).equals(password))
+                return false;
 
-                if (this.users.get(username).equals(password)) {
-                    // password correta
-                    login = true;
-                }
-            }
+            // New account
+            if (!users.containsKey(username))
+                users.put(username, password);
+            
+            return true;
         } finally {
-            lock.unlock();
+            l.unlock();
         }
-        return login;
     }
 
-
-    void setDb(HashMap<String, byte[]> db) {
-        this.db = db;
-    }
-
-    HashMap<String, byte[]> getDb() {
-        return this.db;
-    }
-
-    public void put(String key, byte[] value){
+    public void put(String key, byte[] value) {
+        l.lock();
         try {
-            lock.lock();
             this.db.put(key, value);
         } finally {
-            lock.unlock();
+            l.unlock();
         }
-        // mesmo que a chave ja exista, o valor e atualizado automaticamente
     }
 
-    public byte[] get(String key){
+    public byte[] get(String key) {
+        l.lock();
         try {
-            lock.lock();
             return this.db.get(key);
         } finally {
-            lock.unlock();
+            l.unlock();
         }
     }
 }
