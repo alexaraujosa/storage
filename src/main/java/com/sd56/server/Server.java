@@ -7,10 +7,15 @@ import java.net.Socket;
 public class Server {
     private final static int PORT = 1337;
     private final int maxSessions;
+    private final DatabaseManager dbManager;
 
     public Server(int maxSessions) {
         this.maxSessions = maxSessions;
+        this.dbManager = new DatabaseManager();
     }
+
+    public int getMaxSessions() { return this.maxSessions; }
+    public DatabaseManager getDbManager() { return this.dbManager; }
 
     public static void main(String[] args) throws IOException {
         if(args.length != 1) {
@@ -26,7 +31,7 @@ public class Server {
                 Socket socket = ss.accept();
                 System.out.println("Client connection accepted.");
 
-                Thread thread = new Thread(new Handler(socket,new DatabaseManager()));
+                Thread thread = new Thread(new Handler(socket, server));
                 thread.start();
             }
         } catch (IOException e) {

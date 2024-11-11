@@ -15,11 +15,11 @@ import com.sd56.common.datagram.ResponsePutDatagram;
 
 public class Handler implements Runnable {
     private Socket socket;
-    private DatabaseManager dbManager;
+    private Server server;
 
-    public Handler(Socket socket, DatabaseManager dbManager) {
+    public Handler(Socket socket, Server server) {
         this.socket = socket;
-        this.dbManager = dbManager;
+        this.server = server;
     }
 
     @Override
@@ -35,7 +35,7 @@ public class Handler implements Runnable {
                 switch (datagram.getType()) {
                     case DATAGRAM_TYPE_REQUEST_AUTHENTICATION: 
                         RequestAuthDatagram reqAuth = RequestAuthDatagram.deserialize(in, datagram);
-                        Boolean authValidation = dbManager.login(reqAuth.getUsername(), reqAuth.getPassword());
+                        Boolean authValidation = server.getDbManager().login(reqAuth.getUsername(), reqAuth.getPassword());
                         ResponseAuthDatagram resAuth = new ResponseAuthDatagram(authValidation);
                         resAuth.serialize(out);
                         break;
@@ -43,9 +43,9 @@ public class Handler implements Runnable {
                         RequestPutDatagram reqPut = RequestPutDatagram.deserialize(in,datagram);
                         String key = reqPut.getKey();
                         byte[] value = reqPut.getValue();
-                        dbManager.put(key, value);
+                        server.getDbManager().put(key, value);
                         Boolean putValidation = false;
-                        if(dbManager.getDb().containsKey(key) && Arrays.equals(dbManager.getDb().get(key),value))
+                        if(server.getDbManager().getDb().containsKey(key) && Arrays.equals(server.getDbManager().getDb().get(key),value))
                             putValidation = true;
                         ResponsePutDatagram resPut = new ResponsePutDatagram(putValidation);
                         resPut.serialize(out);
