@@ -13,10 +13,66 @@ import com.sd56.common.datagram.RequestAuthDatagram;
 import com.sd56.common.datagram.ResponseAuthDatagram;
 
 class DatabaseManager {
-    private HashMap<String, byte[]> db = new HashMap<>();
+    private HashMap<String, String> users;
+    private HashMap<String, byte[]> db;
 
-    public void update(String key) {
+    public DatabaseManager(){
+        this.users = new HashMap<>();
+        this.db = new HashMap<>();
+    }
 
+    public void setUsers(HashMap<String, String> users){
+        this.users = users;
+    }
+
+    public HashMap<String, String> getUsers() {
+        return this.users;
+    }
+
+    /*
+    // caso queiramos o registo separado do login
+    public void addUser(String username , String password){
+        if(!this.users.containsKey(username)){
+            this.users.put(username,password);
+        } else {
+            // throw new Exception(User already exists);
+        }
+    }
+     */
+
+    public boolean login(String username, String password){
+        boolean login = false;
+        if(!this.users.containsKey(username)){
+            // caso em que o user ainda nao fez registo
+            this.users.put(username,password);
+            login = true;
+        } else {
+            // caso em que o user ja fez registo
+
+            if(this.users.get(username).equals(password)){
+            // password correta
+                login = true;
+            }
+        }
+        return login;
+    }
+
+
+    public void setDb(HashMap<String, byte[]> db) {
+        this.db = db;
+    }
+
+    public HashMap<String, byte[]> getDb() {
+        return this.db;
+    }
+
+    public void put(String key, byte[] value){
+        this.db.put(key,value);
+        // mesmo que a chave ja exista, o valor e atualizado automaticamente
+    }
+
+    public byte[] get(String key){
+        return this.db.get(key);
     }
 }
 
@@ -42,8 +98,7 @@ class ClientHandler implements Runnable {
                 switch (datagram.getType()) {
                     case DATAGRAM_TYPE_REQUEST_AUTHENTICATION: 
                         RequestAuthDatagram reqAuth = RequestAuthDatagram.deserialize(in, datagram);
-                        //TODO: Boolean validation = DatabaseManager -> verify credencials
-                        Boolean validation = true; // TEMPORARY PURPOSES
+                        Boolean validation = dbManager.login(reqAuth.getUsername(), reqAuth.getPassword()); // TEMPORARY PURPOSES
                         ResponseAuthDatagram resAuth = new ResponseAuthDatagram(validation);
                         resAuth.serialize(out);
                         break;
