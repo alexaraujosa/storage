@@ -14,6 +14,14 @@ public class RequestPutDatagram extends Datagram {
         this.value = value;
     }
 
+    public String getKey() {
+        return this.key;
+    }
+
+    public byte[] getValue() {
+        return this.value;
+    }
+
     @Override
     public void serialize(DataOutputStream out) throws IOException {
         super.serialize(out);

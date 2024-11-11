@@ -6,11 +6,10 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Arrays;
 import java.util.HashMap;
 
-import com.sd56.common.datagram.Datagram;
-import com.sd56.common.datagram.RequestAuthDatagram;
-import com.sd56.common.datagram.ResponseAuthDatagram;
+import com.sd56.common.datagram.*;
 
 class DatabaseManager {
     private HashMap<String, String> users;
@@ -98,12 +97,20 @@ class ClientHandler implements Runnable {
                 switch (datagram.getType()) {
                     case DATAGRAM_TYPE_REQUEST_AUTHENTICATION: 
                         RequestAuthDatagram reqAuth = RequestAuthDatagram.deserialize(in, datagram);
-                        Boolean validation = dbManager.login(reqAuth.getUsername(), reqAuth.getPassword()); // TEMPORARY PURPOSES
-                        ResponseAuthDatagram resAuth = new ResponseAuthDatagram(validation);
+                        Boolean authValidation = dbManager.login(reqAuth.getUsername(), reqAuth.getPassword());
+                        ResponseAuthDatagram resAuth = new ResponseAuthDatagram(authValidation);
                         resAuth.serialize(out);
                         break;
                     case DATAGRAM_TYPE_REQUEST_PUT:
-                        //TODO
+                        RequestPutDatagram reqPut = RequestPutDatagram.deserialize(in,datagram);
+                        String key = reqPut.getKey();
+                        byte[] value = reqPut.getValue();
+                        dbManager.put(key, value);
+                        Boolean putValidation = false;
+                        if(dbManager.getDb().containsKey(key) && Arrays.equals(dbManager.getDb().get(key),value))
+                            putValidation = true;
+                        ResponsePutDatagram resPut = new ResponsePutDatagram(putValidation);
+                        resPut.serialize(out);
                         break;
                     case DATAGRAM_TYPE_REQUEST_GET:
                         //TODO
