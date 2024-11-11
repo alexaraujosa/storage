@@ -12,6 +12,10 @@ public class RequestGetDatagram extends Datagram {
         this.key = key;
     }
 
+    public String getKey(){
+        return this.key;
+    }
+
     @Override
     public void serialize(DataOutputStream out) throws IOException {
         super.serialize(out);

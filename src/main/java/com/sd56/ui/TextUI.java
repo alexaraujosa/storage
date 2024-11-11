@@ -29,13 +29,14 @@ public class TextUI {
         });
 
         menu.setPreCondition(2, () -> this.client.isAuthenticated());
-        //menu.setPreCondition(3, () -> this.client.isAuthenticated());
-        //menu.setPreCondition(4, () -> this.client.isAuthenticated());
-        //menu.setPreCondition(5, () -> this.client.isAuthenticated());
-        //menu.setPreCondition(6, () -> this.client.isAuthenticated());
+        menu.setPreCondition(3, () -> this.client.isAuthenticated());
+        menu.setPreCondition(4, () -> this.client.isAuthenticated());
+        menu.setPreCondition(5, () -> this.client.isAuthenticated());
+        menu.setPreCondition(6, () -> this.client.isAuthenticated());
 
         menu.setHandler(1, this::authentication);
-        //menu.setHandler(2, () -> alterarNomeEmpresa());
+        menu.setHandler(2, this::get);
+        menu.setHandler(3, this::put);
         menu.run();
     }
 
@@ -45,6 +46,20 @@ public class TextUI {
         System.out.println("Insert password:");
         String password = this.sc.nextLine();
         client.authenticate(username, password);
+    }
+
+    private void get(){
+        System.out.println("Insert key:");
+        String key = this.sc.nextLine();
+        client.get(key);
+    }
+
+    private void put(){
+        System.out.println("Insert key:");
+        String key = this.sc.nextLine();
+        System.out.println("Insert value:");
+        String value = this.sc.nextLine(); // conversao para byte[] deve ser feita no cliente
+        client.put(key,value);
     }
 
 }

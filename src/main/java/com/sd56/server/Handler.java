@@ -7,11 +7,7 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.Arrays;
 
-import com.sd56.common.datagram.Datagram;
-import com.sd56.common.datagram.RequestAuthDatagram;
-import com.sd56.common.datagram.RequestPutDatagram;
-import com.sd56.common.datagram.ResponseAuthDatagram;
-import com.sd56.common.datagram.ResponsePutDatagram;
+import com.sd56.common.datagram.*;
 
 public class Handler implements Runnable {
     private Socket socket;
@@ -33,7 +29,7 @@ public class Handler implements Runnable {
                 Datagram datagram = Datagram.deserialize(in);
             
                 switch (datagram.getType()) {
-                    case DATAGRAM_TYPE_REQUEST_AUTHENTICATION: 
+                    case DATAGRAM_TYPE_REQUEST_AUTHENTICATION:
                         RequestAuthDatagram reqAuth = RequestAuthDatagram.deserialize(in, datagram);
                         Boolean authValidation = server.getDbManager().login(reqAuth.getUsername(), reqAuth.getPassword());
                         ResponseAuthDatagram resAuth = new ResponseAuthDatagram(authValidation);
@@ -41,17 +37,21 @@ public class Handler implements Runnable {
                         break;
                     case DATAGRAM_TYPE_REQUEST_PUT:
                         RequestPutDatagram reqPut = RequestPutDatagram.deserialize(in,datagram);
-                        String key = reqPut.getKey();
+                        String putKey = reqPut.getKey();
                         byte[] value = reqPut.getValue();
-                        server.getDbManager().put(key, value);
+                        server.getDbManager().put(putKey, value);
                         Boolean putValidation = false;
-                        if(server.getDbManager().getDb().containsKey(key) && Arrays.equals(server.getDbManager().getDb().get(key),value))
+                        if(server.getDbManager().getDb().containsKey(putKey) && Arrays.equals(server.getDbManager().getDb().get(putKey),value))
                             putValidation = true;
                         ResponsePutDatagram resPut = new ResponsePutDatagram(putValidation);
                         resPut.serialize(out);
                         break;
                     case DATAGRAM_TYPE_REQUEST_GET:
-                        //TODO
+                        RequestGetDatagram reqGet = RequestGetDatagram.deserialize(in,datagram);
+                        String getKey = reqGet.getKey();
+                        byte[] getValue = server.getDbManager().get(getKey);
+                        ResponseGetDatagram resGet = new ResponseGetDatagram(getValue);
+                        resGet.serialize(out);
                         break;
                     default:
                         // Ignore it ig?

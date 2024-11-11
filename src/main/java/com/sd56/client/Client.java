@@ -4,13 +4,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
-import com.sd56.common.datagram.Datagram;
-import com.sd56.common.datagram.RequestAuthDatagram;
-import com.sd56.common.datagram.ResponseAuthDatagram;
-import com.sd56.common.datagram.ResponseGetDatagram;
-import com.sd56.common.datagram.ResponsePutDatagram;
+import com.sd56.common.datagram.*;
 import com.sd56.ui.BetterMenu;
 import com.sd56.ui.TextUI;
 
@@ -58,6 +55,64 @@ public class Client {
                 case DATAGRAM_TYPE_RESPONSE_AUTHENTICATION:
                     ResponseAuthDatagram resAuth = ResponseAuthDatagram.deserialize(in, datagram);
                     if (resAuth.getValidation() == false) {
+                        System.err.println("Invalid credencials.");
+                        return;
+                    }
+                    //Colocar authenticated igual a true para disponibilizar novas opções
+                    this.authenticated = true;
+                    break;
+                default:
+                    break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void get(String key) {
+        try {
+            DataInputStream in = new DataInputStream(this.socket.getInputStream());
+            DataOutputStream out = new DataOutputStream(this.socket.getOutputStream());
+            RequestGetDatagram reqGet = new RequestGetDatagram(key);
+            reqGet.serialize(out);
+            out.flush();
+
+            Datagram datagram = Datagram.deserialize(in);
+
+            switch (datagram.getType()) {
+                case DATAGRAM_TYPE_RESPONSE_GET:
+                    ResponseGetDatagram resGet = ResponseGetDatagram.deserialize(in, datagram);
+                    if (resGet.getValue() == null) {
+                        System.err.println("Invalid key");
+                        return;
+                    } else{
+                        System.out.println("Value: " + new String(resGet.getValue(), StandardCharsets.UTF_8));
+                    }
+                    //Colocar authenticated igual a true para disponibilizar novas opções
+                    this.authenticated = true;
+                    break;
+                default:
+                    break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void put(String key, String value) {
+        try {
+            DataInputStream in = new DataInputStream(this.socket.getInputStream());
+            DataOutputStream out = new DataOutputStream(this.socket.getOutputStream());
+            RequestPutDatagram reqPut = new RequestPutDatagram(key, value.getBytes(StandardCharsets.UTF_8));
+            reqPut.serialize(out);
+            out.flush();
+
+            Datagram datagram = Datagram.deserialize(in);
+
+            switch (datagram.getType()) {
+                case DATAGRAM_TYPE_RESPONSE_PUT:
+                    ResponsePutDatagram resPut = ResponsePutDatagram.deserialize(in, datagram);
+                    if (resPut.getValidation() == false) {
                         System.err.println("Invalid credencials.");
                         return;
                     }
