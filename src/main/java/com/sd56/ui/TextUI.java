@@ -70,8 +70,16 @@ public class TextUI {
     private void put(){
         System.out.println("Insert key:");
         String key = this.sc.nextLine();
+        while (key.isEmpty()) {
+            System.out.println("The key can't be empty. Try again:");
+            key = this.sc.nextLine();
+        }
         System.out.println("Insert value:");
         String value = this.sc.nextLine(); // conversao para byte[] deve ser feita no cliente
+        while (value.isEmpty()) {
+            System.out.println("The value can't be empty. Try again:");
+            value = this.sc.nextLine();
+        }
         client.put(key,value);
     }
 
