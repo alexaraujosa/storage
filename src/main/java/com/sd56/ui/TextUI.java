@@ -60,6 +60,10 @@ public class TextUI {
     private void get(){
         System.out.println("Insert key:");
         String key = this.sc.nextLine();
+        while (key.isEmpty()) {
+            System.out.println("The key can't be empty. Try again:");
+            key = this.sc.nextLine();
+        }
         client.get(key);
     }
 
