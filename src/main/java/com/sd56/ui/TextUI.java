@@ -1,7 +1,7 @@
 package com.sd56.ui;
-import com.sd56.client.Client;
-
 import java.util.Scanner;
+
+import com.sd56.client.Client;
 
 public class TextUI {
     private Scanner sc;
@@ -28,6 +28,7 @@ public class TextUI {
                 "Send GetWhen"
         });
 
+        menu.setPreCondition(1, () -> !this.client.isAuthenticated());
         menu.setPreCondition(2, () -> this.client.isAuthenticated());
         menu.setPreCondition(3, () -> this.client.isAuthenticated());
         menu.setPreCondition(4, () -> this.client.isAuthenticated());
@@ -43,8 +44,16 @@ public class TextUI {
     private void authentication() {
         System.out.println("Insert username:");
         String username = this.sc.nextLine();
+        while (username.isEmpty())  {
+            System.out.println("The username can't be empty. Try again:");
+            username = this.sc.nextLine();
+        }
         System.out.println("Insert password:");
         String password = this.sc.nextLine();
+        while (password.isEmpty()) {
+            System.out.println("The password can't be empty. Try again:");
+            password = this.sc.nextLine();
+        }
         client.authenticate(username, password);
     }
 
