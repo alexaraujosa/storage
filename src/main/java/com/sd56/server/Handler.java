@@ -6,8 +6,20 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.net.Socket;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
-import com.sd56.common.datagram.*;
+import com.sd56.common.datagram.Datagram;
+import com.sd56.common.datagram.RequestAuthDatagram;
+import com.sd56.common.datagram.RequestGetDatagram;
+import com.sd56.common.datagram.RequestMultiGetDatagram;
+import com.sd56.common.datagram.RequestPutDatagram;
+import com.sd56.common.datagram.ResponseAuthDatagram;
+import com.sd56.common.datagram.ResponseGetDatagram;
+import com.sd56.common.datagram.ResponseMultiGetDatagram;
+import com.sd56.common.datagram.ResponsePutDatagram;
 
 public class Handler implements Runnable {
     private Socket socket;
@@ -20,7 +32,15 @@ public class Handler implements Runnable {
 
     @Override
     public void run() {
-        System.out.println("Hello! Me am a Thread");
+        System.out.println("[SERVER] - New client connection established.");
+
+        System.out.println("[SERVER/DEBUG] - USERS");
+        for (Entry<String,String> entry : server.getDbManager().getUsers().entrySet())
+            System.out.println("[SERVER/DEBUG] " + entry.getKey() + " : " + entry.getValue());
+
+        System.out.println("[SERVER/DEBUG] - DATABASE");
+        for (Entry<String, byte[]> entry : server.getDbManager().getDb().entrySet())
+            System.out.println("[SERVER/DEBUG] " + entry.getKey() + " : " + new String(entry.getValue()));
 
         try{
             DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -52,6 +72,16 @@ public class Handler implements Runnable {
                         byte[] getValue = server.getDbManager().get(getKey);
                         ResponseGetDatagram resGet = new ResponseGetDatagram(getValue);
                         resGet.serialize(out);
+                        break;
+                    case DATAGRAM_TYPE_REQUEST_MULTIGET:
+                        RequestMultiGetDatagram reqMultiGet = RequestMultiGetDatagram.deserialize(in, datagram);
+                        Set<String> keys = reqMultiGet.getKeys();
+                        Map<String, byte[]> values = new HashMap<>();
+                        for (String key : keys) {
+                            values.put(key, server.getDbManager().getDb().get(key));
+                        }
+                        ResponseMultiGetDatagram resMultiGet = new ResponseMultiGetDatagram(values);
+                        resMultiGet.serialize(out);
                         break;
                     default:
                         // Ignore it ig?

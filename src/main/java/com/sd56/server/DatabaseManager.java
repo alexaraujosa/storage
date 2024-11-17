@@ -14,6 +14,7 @@ public class DatabaseManager {
         this.l = new ReentrantLock();
     }
 
+    public HashMap<String, String> getUsers() { return this.users; }
     public HashMap<String, byte[]> getDb() { return this.db; }
 
     public boolean authentication(String username, String password) {

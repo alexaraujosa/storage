@@ -5,10 +5,18 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.Scanner;
+import java.util.Map;
+import java.util.Set;
 
-import com.sd56.common.datagram.*;
-import com.sd56.ui.BetterMenu;
+import com.sd56.common.datagram.Datagram;
+import com.sd56.common.datagram.RequestAuthDatagram;
+import com.sd56.common.datagram.RequestGetDatagram;
+import com.sd56.common.datagram.RequestMultiGetDatagram;
+import com.sd56.common.datagram.RequestPutDatagram;
+import com.sd56.common.datagram.ResponseAuthDatagram;
+import com.sd56.common.datagram.ResponseGetDatagram;
+import com.sd56.common.datagram.ResponseMultiGetDatagram;
+import com.sd56.common.datagram.ResponsePutDatagram;
 import com.sd56.ui.TextUI;
 
 public class Client {
@@ -118,6 +126,36 @@ public class Client {
                     }
                     //Colocar authenticated igual a true para disponibilizar novas opções
                     this.authenticated = true;
+                    break;
+                default:
+                    break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void multiGet(Set<String> keys) {
+        try {
+            DataInputStream in = new DataInputStream(this.socket.getInputStream());
+            DataOutputStream out = new DataOutputStream(this.socket.getOutputStream());
+            RequestMultiGetDatagram reqMultiGet = new RequestMultiGetDatagram(keys);
+            reqMultiGet.serialize(out);
+            out.flush();
+            
+            Datagram datagram = Datagram.deserialize(in);
+
+            switch (datagram.getType()) {
+                case DATAGRAM_TYPE_RESPONSE_MULTIGET:
+                    ResponseMultiGetDatagram resMultiGet = ResponseMultiGetDatagram.deserialize(in, datagram);
+                    Map<String, byte[]> values = resMultiGet.getValues();
+                    for (Map.Entry<String, byte[]> entry : values.entrySet()) {
+                        if (entry.getValue() == null) {
+                            System.out.println("Key doesn't exist.");
+                        } else {
+                            System.out.println("Key: " + entry.getKey() + " || Value: " + new String(entry.getValue(), StandardCharsets.UTF_8));
+                        }
+                    }
                     break;
                 default:
                     break;
