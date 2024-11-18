@@ -12,10 +12,12 @@ import com.sd56.common.datagram.Datagram;
 import com.sd56.common.datagram.RequestAuthDatagram;
 import com.sd56.common.datagram.RequestGetDatagram;
 import com.sd56.common.datagram.RequestMultiGetDatagram;
+import com.sd56.common.datagram.RequestMultiPutDatagram;
 import com.sd56.common.datagram.RequestPutDatagram;
 import com.sd56.common.datagram.ResponseAuthDatagram;
 import com.sd56.common.datagram.ResponseGetDatagram;
 import com.sd56.common.datagram.ResponseMultiGetDatagram;
+import com.sd56.common.datagram.ResponseMultiPutDatagram;
 import com.sd56.common.datagram.ResponsePutDatagram;
 import com.sd56.ui.TextUI;
 
@@ -121,11 +123,9 @@ public class Client {
                 case DATAGRAM_TYPE_RESPONSE_PUT:
                     ResponsePutDatagram resPut = ResponsePutDatagram.deserialize(in, datagram);
                     if (resPut.getValidation() == false) {
-                        System.err.println("Invalid credencials.");
+                        System.err.println("The operation put could not succeed.");
                         return;
                     }
-                    //Colocar authenticated igual a true para disponibilizar novas opções
-                    this.authenticated = true;
                     break;
                 default:
                     break;
@@ -154,6 +154,36 @@ public class Client {
                             System.out.println("Key doesn't exist.");
                         } else {
                             System.out.println("Key: " + entry.getKey() + " || Value: " + new String(entry.getValue(), StandardCharsets.UTF_8));
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void multiPut(Map<String, byte[]> values) {
+        try {
+            DataInputStream in = new DataInputStream(this.socket.getInputStream());
+            DataOutputStream out = new DataOutputStream(this.socket.getOutputStream());
+            RequestMultiPutDatagram reqMultiPut = new RequestMultiPutDatagram(values);
+            reqMultiPut.serialize(out);
+            out.flush();
+
+            Datagram datagram = Datagram.deserialize(in);
+            switch (datagram.getType()) {
+                case DATAGRAM_TYPE_RESPONSE_MULTIPUT:
+                    ResponseMultiPutDatagram resMultiPut = ResponseMultiPutDatagram.deserialize(in, datagram);
+                    Map<String, Boolean> validations = resMultiPut.getValidations();
+
+                    for (Map.Entry<String, Boolean> entry : validations.entrySet()) {
+                        if (entry.getValue()) {
+                            System.out.println("Key '" + entry.getKey() + "' successfully added to the database.");
+                        } else {
+                            System.out.println("Key '" + entry.getKey() + "' not added to the database.");
                         }
                     }
                     break;

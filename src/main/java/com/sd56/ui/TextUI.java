@@ -1,5 +1,8 @@
 package com.sd56.ui;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
@@ -41,6 +44,7 @@ public class TextUI {
         menu.setHandler(2, this::get);
         menu.setHandler(3, this::put);
         menu.setHandler(4, this::multiGet);
+        menu.setHandler(5, this::multiPut);
         menu.run();
     }
 
@@ -78,7 +82,7 @@ public class TextUI {
             key = this.sc.nextLine();
         }
         System.out.println("Insert value:");
-        String value = this.sc.nextLine(); // conversao para byte[] deve ser feita no cliente
+        String value = this.sc.nextLine(); // conversao para byte[] deve ser feita no cliente   // TODO: Convert to byte[] here
         while (value.isEmpty()) {
             System.out.println("The value can't be empty. Try again:");
             value = this.sc.nextLine();
@@ -107,4 +111,33 @@ public class TextUI {
         client.multiGet(keys);
     }
 
+    private void multiPut() {
+        Map<String, byte[]> values = new HashMap<>();
+        System.out.println("How many values do you wanna put?");
+        int size = this.sc.nextInt();
+        while (size <= 0) {
+            System.out.println("The number of values can't be negative or nil. Try again:");
+            size = this.sc.nextInt();
+        }
+        this.sc.nextLine(); // Clear scanner
+        for (int i = 0 ; i < size ; i++) {
+            System.out.println("Insert key: ");
+            String key = this.sc.nextLine();
+            while (key.isEmpty()) {
+                System.out.println("The key can't be empty. Try again:");
+                key = this.sc.nextLine();
+            }
+
+            System.out.println("Insert value: ");
+            String value = this.sc.nextLine();
+            while (value.isEmpty()) {
+                System.out.println("The value can't be empty. Try again:");
+                value = this.sc.nextLine();
+            }
+
+            values.put(key, value.getBytes(StandardCharsets.UTF_8));
+        }
+
+        client.multiPut(values);
+    }
 }

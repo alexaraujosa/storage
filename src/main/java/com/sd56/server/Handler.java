@@ -15,10 +15,12 @@ import com.sd56.common.datagram.Datagram;
 import com.sd56.common.datagram.RequestAuthDatagram;
 import com.sd56.common.datagram.RequestGetDatagram;
 import com.sd56.common.datagram.RequestMultiGetDatagram;
+import com.sd56.common.datagram.RequestMultiPutDatagram;
 import com.sd56.common.datagram.RequestPutDatagram;
 import com.sd56.common.datagram.ResponseAuthDatagram;
 import com.sd56.common.datagram.ResponseGetDatagram;
 import com.sd56.common.datagram.ResponseMultiGetDatagram;
+import com.sd56.common.datagram.ResponseMultiPutDatagram;
 import com.sd56.common.datagram.ResponsePutDatagram;
 
 public class Handler implements Runnable {
@@ -58,10 +60,10 @@ public class Handler implements Runnable {
                     case DATAGRAM_TYPE_REQUEST_PUT:
                         RequestPutDatagram reqPut = RequestPutDatagram.deserialize(in,datagram);
                         String putKey = reqPut.getKey();
-                        byte[] value = reqPut.getValue();
-                        server.getDbManager().put(putKey, value);
+                        byte[] putValue = reqPut.getValue();
+                        server.getDbManager().put(putKey, putValue);
                         Boolean putValidation = false;
-                        if(server.getDbManager().getDb().containsKey(putKey) && Arrays.equals(server.getDbManager().getDb().get(putKey),value))
+                        if(server.getDbManager().getDb().containsKey(putKey) && Arrays.equals(server.getDbManager().getDb().get(putKey),putValue))
                             putValidation = true;
                         ResponsePutDatagram resPut = new ResponsePutDatagram(putValidation);
                         resPut.serialize(out);
@@ -75,13 +77,32 @@ public class Handler implements Runnable {
                         break;
                     case DATAGRAM_TYPE_REQUEST_MULTIGET:
                         RequestMultiGetDatagram reqMultiGet = RequestMultiGetDatagram.deserialize(in, datagram);
-                        Set<String> keys = reqMultiGet.getKeys();
-                        Map<String, byte[]> values = new HashMap<>();
-                        for (String key : keys) {
-                            values.put(key, server.getDbManager().getDb().get(key));
+                        Set<String> multiGetKeys = reqMultiGet.getKeys();
+                        Map<String, byte[]> multiGetValues = new HashMap<>();
+                        for (String key : multiGetKeys) {
+                            multiGetValues.put(key, server.getDbManager().getDb().get(key));
                         }
-                        ResponseMultiGetDatagram resMultiGet = new ResponseMultiGetDatagram(values);
+                        ResponseMultiGetDatagram resMultiGet = new ResponseMultiGetDatagram(multiGetValues);
                         resMultiGet.serialize(out);
+                        break;
+                    case DATAGRAM_TYPE_REQUEST_MULTIPUT:
+                        RequestMultiPutDatagram reqMultiPut = RequestMultiPutDatagram.deserialize(in, datagram);
+                        Map<String, byte[]> multiPutValues = reqMultiPut.getValues();
+                        Map<String, Boolean> multiPutValidations = new HashMap<>();
+                        for (Map.Entry<String, byte[]> entry : multiPutValues.entrySet()) {
+                            server.getDbManager().put(entry.getKey(), entry.getValue());
+                            Boolean multiPutValidation = false;
+                            if (
+                                server.getDbManager().getDb().containsKey(entry.getKey()) && 
+                                Arrays.equals(server.getDbManager().getDb().get(entry.getKey()), entry.getValue())
+                            ) {
+                                multiPutValidation = true;
+                            }
+                            multiPutValidations.put(entry.getKey(), multiPutValidation);
+                        }
+
+                        ResponseMultiPutDatagram resMultiPut = new ResponseMultiPutDatagram(multiPutValidations);
+                        resMultiPut.serialize(out);
                         break;
                     default:
                         // Ignore it ig?
