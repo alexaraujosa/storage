@@ -7,6 +7,7 @@ public class BetterMenu {
     private List<String> opcoes;
     private List<PreCondition> disponivel;
     private List<Handler> handlers;
+    private final boolean isWindows;
 
 
     public interface Handler {
@@ -21,6 +22,10 @@ public class BetterMenu {
         this.opcoes = Arrays.asList(opcoes);
         this.disponivel = new ArrayList<>();
         this.handlers = new ArrayList<>();
+
+        String os = System.getProperty("os.name").toLowerCase();
+        this.isWindows = os.contains("win");
+
         this.opcoes.forEach(s-> {
             this.disponivel.add(()->true);
             this.handlers.add(()->System.out.println("\nOption not implemented yettttttttt! :P"));
@@ -29,9 +34,11 @@ public class BetterMenu {
 
     public void run() {
         int op;
+
         do {
             this.show();
             op = readOption();
+
             if (op>0 && !this.disponivel.get(op-1).validate()) {
                 System.out.println("Option unavailable! Try again.");
             } else if (op>0) {
@@ -51,6 +58,7 @@ public class BetterMenu {
 
     private void show() {
         System.out.println("\n --- BetterMenu --- ");
+
         for (int i=0; i<this.opcoes.size(); i++) {
             System.out.print(i+1);
             System.out.print(" - ");
@@ -62,8 +70,8 @@ public class BetterMenu {
 
     private int readOption() {
         int op;
-
         System.out.print("Option: ");
+
         try {
             String line = is.nextLine();
             op = Integer.parseInt(line);
@@ -71,10 +79,34 @@ public class BetterMenu {
         catch (NumberFormatException e) {
             op = -1;
         }
+
         if (op<0 || op>this.opcoes.size()) {
             System.out.println("Invalid option! Try again.!!!");
             op = -1;
         }
         return op;
+    }
+
+    public void clearScreen() {
+        try {
+
+            if (this.isWindows) {
+                // Verificar se estamos no Git Bash ou outro terminal Unix-like no Windows
+                String term = System.getenv("TERM");
+
+                if (term != null && term.contains("xterm")) {
+                    System.out.print("\033[H\033[2J");
+                    System.out.flush();
+                } else {
+                    new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
+                }
+            } else {
+                // Sistemas Unix-based (Linux/Mac)
+                System.out.print("\033[H\033[2J");
+                System.out.flush();
+            }
+        } catch (Exception e) {
+            System.out.println("Unable to clear screen.");
+        }
     }
 }
