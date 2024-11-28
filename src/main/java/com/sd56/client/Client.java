@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.sd56.common.datagram.Datagram;
+import com.sd56.common.datagram.Datagram.DatagramType;
 import com.sd56.common.datagram.RequestAuthDatagram;
 import com.sd56.common.datagram.RequestGetDatagram;
 import com.sd56.common.datagram.RequestMultiGetDatagram;
@@ -51,6 +52,17 @@ public class Client {
         }
     }
 
+    public void close() {
+        try {
+            DataOutputStream out = new DataOutputStream(this.socket.getOutputStream());
+            Datagram closeDg = new Datagram(DatagramType.DATAGRAM_TYPE_REQUEST_CLOSE);
+            closeDg.serialize(out);
+            out.flush();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void authenticate(String username, String password) {
         try {
             DataInputStream in = new DataInputStream(this.socket.getInputStream());
@@ -59,8 +71,9 @@ public class Client {
             reqAuth.serialize(out);
             out.flush();
 
-            Datagram datagram = Datagram.deserialize(in);
+            System.out.println("Awaiting for authentication...");
 
+            Datagram datagram = Datagram.deserialize(in);
             switch (datagram.getType()) {
                 case DATAGRAM_TYPE_RESPONSE_AUTHENTICATION:
                     ResponseAuthDatagram resAuth = ResponseAuthDatagram.deserialize(in, datagram);

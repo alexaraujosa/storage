@@ -18,6 +18,7 @@ public class TextUI {
         this.sc = new Scanner(System.in);
         this.client = client;
         this.menu = new BetterMenu(new String[] {
+                "Close Connection",
                 "Authentication",
                 "Send Get",
                 "Send Put",
@@ -41,12 +42,19 @@ public class TextUI {
         this.menu.setPreCondition(5, () -> this.client.isAuthenticated());
         this.menu.setPreCondition(6, () -> this.client.isAuthenticated());
 
+        this.menu.setHandler(0, this::close);
         this.menu.setHandler(1, this::authentication);
         this.menu.setHandler(2, this::get);
         this.menu.setHandler(3, this::put);
         this.menu.setHandler(4, this::multiGet);
         this.menu.setHandler(5, this::multiPut);
         this.menu.run();
+    }
+
+    private void close() {
+        this.menu.clearScreen();
+        System.out.println("Closing the connection.");
+        client.close();
     }
 
     private void authentication() {

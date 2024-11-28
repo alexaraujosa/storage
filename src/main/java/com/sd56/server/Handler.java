@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.sd56.common.datagram.Datagram;
 import com.sd56.common.datagram.RequestAuthDatagram;
@@ -24,12 +26,16 @@ import com.sd56.common.datagram.ResponseMultiPutDatagram;
 import com.sd56.common.datagram.ResponsePutDatagram;
 
 public class Handler implements Runnable {
-    private Socket socket;
-    private Server server;
+    private final Socket socket;
+    private final Server server;
+    private final ReentrantLock l;
+    private final Condition c;
 
     public Handler(Socket socket, Server server) {
         this.socket = socket;
         this.server = server;
+        this.l = new ReentrantLock();
+        this.c = l.newCondition();
     }
 
     @Override
@@ -37,7 +43,7 @@ public class Handler implements Runnable {
         System.out.println("[SERVER] - New client connection established.");
 
         System.out.println("[SERVER/DEBUG] - USERS");
-        for (Entry<String,String> entry : server.getDbManager().getUsers().entrySet())
+        for (Entry<String, String> entry : server.getDbManager().getUsers().entrySet())
             System.out.println("[SERVER/DEBUG] " + entry.getKey() + " : " + entry.getValue());
 
         System.out.println("[SERVER/DEBUG] - DATABASE");
@@ -53,9 +59,24 @@ public class Handler implements Runnable {
                 switch (datagram.getType()) {
                     case DATAGRAM_TYPE_REQUEST_AUTHENTICATION:
                         RequestAuthDatagram reqAuth = RequestAuthDatagram.deserialize(in, datagram);
-                        Boolean authValidation = server.getDbManager().authentication(reqAuth.getUsername(), reqAuth.getPassword());
-                        ResponseAuthDatagram resAuth = new ResponseAuthDatagram(authValidation);
-                        resAuth.serialize(out);
+                        l.lock();
+                        try {
+                            if (server.getCurrentSessions() >= server.getMaxSessions()) {
+                                server.getAwaitingSessions().add(this);
+                                System.out.println("[SERVER/DEBUG] FULL SESSIONS.");
+                                System.out.println("[SERVER/DEBUG] " + server.getAwaitingSessions().toString());
+                                while (server.getCurrentSessions() >= server.getMaxSessions())
+                                    c.await();
+                            } 
+
+                            Boolean authValidation = server.getDbManager().authentication(reqAuth.getUsername(), reqAuth.getPassword());
+                            if (authValidation) server.setCurrentSessions(server.getCurrentSessions() + 1);
+                            ResponseAuthDatagram resAuth = new ResponseAuthDatagram(authValidation);
+                            resAuth.serialize(out);
+                        } finally {
+                            l.unlock();
+                        }
+
                         break;
                     case DATAGRAM_TYPE_REQUEST_PUT:
                         RequestPutDatagram reqPut = RequestPutDatagram.deserialize(in,datagram);
@@ -104,6 +125,18 @@ public class Handler implements Runnable {
                         ResponseMultiPutDatagram resMultiPut = new ResponseMultiPutDatagram(multiPutValidations);
                         resMultiPut.serialize(out);
                         break;
+                    case DATAGRAM_TYPE_REQUEST_CLOSE:
+                        server.setCurrentSessions(server.getCurrentSessions() - 1);
+                        Handler first = server.getAwaitingSessions().poll();
+                        if (first != null) {
+                            first.l.lock();
+                            try {
+                                first.c.signal();
+                            } finally {
+                                first.l.unlock();
+                            }
+                        }
+                        break;
                     default:
                         // Ignore it ig?
                         break;
@@ -112,6 +145,8 @@ public class Handler implements Runnable {
         } catch (EOFException e) {
             System.out.println("A conexão foi encerrada, já não há mais nada a ler!");;
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }

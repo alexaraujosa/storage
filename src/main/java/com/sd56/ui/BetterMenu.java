@@ -1,5 +1,8 @@
 package com.sd56.ui;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
 
 
 public class BetterMenu {
@@ -39,32 +42,36 @@ public class BetterMenu {
             this.show();
             op = readOption();
 
-            if (op>0 && !this.disponivel.get(op-1).validate()) {
+            if (op>0 && !this.disponivel.get(op).validate()) {
                 System.out.println("Option unavailable! Try again.");
             } else if (op>0) {
-                this.handlers.get(op-1).execute();
+                this.handlers.get(op).execute();
             }
         } while (op != 0);
+
+        this.handlers.get(op).execute();
     }
 
     public void setPreCondition(int i, PreCondition b) {
-        this.disponivel.set(i-1,b);
+        this.disponivel.set(i,b);
     }
 
     public void setHandler(int i, Handler h) {
-        this.handlers.set(i-1, h);
+        this.handlers.set(i, h);
     }
 
 
     private void show() {
         System.out.println("\n --- BetterMenu --- ");
 
-        for (int i=0; i<this.opcoes.size(); i++) {
-            System.out.print(i+1);
+        for (int i=1; i<this.opcoes.size(); i++) {
+            System.out.print(i);
             System.out.print(" - ");
             System.out.println(this.disponivel.get(i).validate()?this.opcoes.get(i):"---");
         }
-        System.out.println("0 - Sair");
+        System.out.print(0);
+        System.out.print(" - ");
+        System.out.println(this.disponivel.getFirst().validate()?this.opcoes.getFirst():"---");
     }
 
 
