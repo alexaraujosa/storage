@@ -1,4 +1,4 @@
-package com.sd56.ui;
+package com.sd56.common.menu;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

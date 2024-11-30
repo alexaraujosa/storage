@@ -20,7 +20,6 @@ import com.sd56.common.datagram.ResponseGetDatagram;
 import com.sd56.common.datagram.ResponseMultiGetDatagram;
 import com.sd56.common.datagram.ResponseMultiPutDatagram;
 import com.sd56.common.datagram.ResponsePutDatagram;
-import com.sd56.ui.TextUI;
 
 public class Client {
     private final String HOST = "localhost";
@@ -28,6 +27,8 @@ public class Client {
 
     private boolean authenticated;
     private Socket socket;
+    private DataInputStream in;
+    private DataOutputStream out;
 
     public Client() {
         this.authenticated = false;
@@ -44,8 +45,8 @@ public class Client {
     public void tryConnect() {
         try {
             this.socket = new Socket(HOST, PORT);
-            //Acho que isto não é necessário
-            //this.socket.setKeepAlive(true);
+            this.in = new DataInputStream(socket.getInputStream());
+            this.out = new DataOutputStream(socket.getOutputStream());
             System.out.println("Connection established.");
         } catch (Exception e) {
             e.printStackTrace();
@@ -54,10 +55,9 @@ public class Client {
 
     public void close() {
         try {
-            DataOutputStream out = new DataOutputStream(this.socket.getOutputStream());
             Datagram closeDg = new Datagram(DatagramType.DATAGRAM_TYPE_REQUEST_CLOSE);
-            closeDg.serialize(out);
-            out.flush();
+            closeDg.serialize(this.out);
+            this.out.flush();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -65,19 +65,17 @@ public class Client {
 
     public void authenticate(String username, String password) {
         try {
-            DataInputStream in = new DataInputStream(this.socket.getInputStream());
-            DataOutputStream out = new DataOutputStream(this.socket.getOutputStream());
             RequestAuthDatagram reqAuth = new RequestAuthDatagram(username, password);
-            reqAuth.serialize(out);
-            out.flush();
+            reqAuth.serialize(this.out);
+            this.out.flush();
 
             System.out.println("Awaiting for authentication...");
 
-            Datagram datagram = Datagram.deserialize(in);
+            Datagram datagram = Datagram.deserialize(this.in);
             switch (datagram.getType()) {
                 case DATAGRAM_TYPE_RESPONSE_AUTHENTICATION:
-                    ResponseAuthDatagram resAuth = ResponseAuthDatagram.deserialize(in, datagram);
-                    if (resAuth.getValidation() == false) {
+                    ResponseAuthDatagram resAuth = ResponseAuthDatagram.deserialize(this.in, datagram);
+                    if (!resAuth.getValidation()) {
                         System.err.println("Invalid credencials.");
                         return;
                     }
@@ -94,17 +92,15 @@ public class Client {
 
     public void get(String key) {
         try {
-            DataInputStream in = new DataInputStream(this.socket.getInputStream());
-            DataOutputStream out = new DataOutputStream(this.socket.getOutputStream());
             RequestGetDatagram reqGet = new RequestGetDatagram(key);
-            reqGet.serialize(out);
-            out.flush();
+            reqGet.serialize(this.out);
+            this.out.flush();
 
-            Datagram datagram = Datagram.deserialize(in);
+            Datagram datagram = Datagram.deserialize(this.in);
 
             switch (datagram.getType()) {
                 case DATAGRAM_TYPE_RESPONSE_GET:
-                    ResponseGetDatagram resGet = ResponseGetDatagram.deserialize(in, datagram);
+                    ResponseGetDatagram resGet = ResponseGetDatagram.deserialize(this.in, datagram);
                     if (resGet.getValue() == null) {
                         System.err.println("Invalid key");
                         return;
@@ -124,18 +120,16 @@ public class Client {
 
     public void put(String key, String value) {
         try {
-            DataInputStream in = new DataInputStream(this.socket.getInputStream());
-            DataOutputStream out = new DataOutputStream(this.socket.getOutputStream());
             RequestPutDatagram reqPut = new RequestPutDatagram(key, value.getBytes(StandardCharsets.UTF_8));
-            reqPut.serialize(out);
-            out.flush();
+            reqPut.serialize(this.out);
+            this.out.flush();
 
-            Datagram datagram = Datagram.deserialize(in);
+            Datagram datagram = Datagram.deserialize(this.in);
 
             switch (datagram.getType()) {
                 case DATAGRAM_TYPE_RESPONSE_PUT:
-                    ResponsePutDatagram resPut = ResponsePutDatagram.deserialize(in, datagram);
-                    if (resPut.getValidation() == false) {
+                    ResponsePutDatagram resPut = ResponsePutDatagram.deserialize(this.in, datagram);
+                    if (!resPut.getValidation()) {
                         System.err.println("The operation put could not succeed.");
                         return;
                     }
@@ -150,17 +144,15 @@ public class Client {
 
     public void multiGet(Set<String> keys) {
         try {
-            DataInputStream in = new DataInputStream(this.socket.getInputStream());
-            DataOutputStream out = new DataOutputStream(this.socket.getOutputStream());
             RequestMultiGetDatagram reqMultiGet = new RequestMultiGetDatagram(keys);
-            reqMultiGet.serialize(out);
-            out.flush();
+            reqMultiGet.serialize(this.out);
+            this.out.flush();
             
-            Datagram datagram = Datagram.deserialize(in);
+            Datagram datagram = Datagram.deserialize(this.in);
 
             switch (datagram.getType()) {
                 case DATAGRAM_TYPE_RESPONSE_MULTIGET:
-                    ResponseMultiGetDatagram resMultiGet = ResponseMultiGetDatagram.deserialize(in, datagram);
+                    ResponseMultiGetDatagram resMultiGet = ResponseMultiGetDatagram.deserialize(this.in, datagram);
                     Map<String, byte[]> values = resMultiGet.getValues();
                     for (Map.Entry<String, byte[]> entry : values.entrySet()) {
                         if (entry.getValue() == null) {
@@ -180,16 +172,14 @@ public class Client {
 
     public void multiPut(Map<String, byte[]> values) {
         try {
-            DataInputStream in = new DataInputStream(this.socket.getInputStream());
-            DataOutputStream out = new DataOutputStream(this.socket.getOutputStream());
             RequestMultiPutDatagram reqMultiPut = new RequestMultiPutDatagram(values);
-            reqMultiPut.serialize(out);
-            out.flush();
+            reqMultiPut.serialize(this.out);
+            this.out.flush();
 
-            Datagram datagram = Datagram.deserialize(in);
+            Datagram datagram = Datagram.deserialize(this.in);
             switch (datagram.getType()) {
                 case DATAGRAM_TYPE_RESPONSE_MULTIPUT:
-                    ResponseMultiPutDatagram resMultiPut = ResponseMultiPutDatagram.deserialize(in, datagram);
+                    ResponseMultiPutDatagram resMultiPut = ResponseMultiPutDatagram.deserialize(this.in, datagram);
                     Map<String, Boolean> validations = resMultiPut.getValidations();
 
                     for (Map.Entry<String, Boolean> entry : validations.entrySet()) {
@@ -208,51 +198,9 @@ public class Client {
         }
     }
 
-    /*public void tryConnection(String username, String password) {
-        try (Socket socket = new Socket(this.HOST, this.PORT)) {
-            DataInputStream in = new DataInputStream(socket.getInputStream());
-            DataOutputStream out = new DataOutputStream(socket.getOutputStream());
-            System.out.println("Connection established.");
-
-            RequestAuthDatagram reqAuth = new RequestAuthDatagram(username, password);
-            reqAuth.serialize(out);
-            out.flush();
-
-            while (!socket.isInputShutdown()) {
-                Datagram datagram = Datagram.deserialize(in);
-
-                switch (datagram.getType()) {
-                    case DATAGRAM_TYPE_RESPONSE_AUTHENTICATION:
-                        ResponseAuthDatagram resAuth = ResponseAuthDatagram.deserialize(in, datagram);
-                        if (resAuth.getValidation() == false) {
-                            System.err.println("Invalid credencials.");
-                            return;
-                        }
-                        //Colocar authenticated igual a true para disponibilizar novas opções
-                        this.authenticated = true;
-                        break;
-                    case DATAGRAM_TYPE_RESPONSE_PUT:
-                        ResponsePutDatagram resPut = ResponsePutDatagram.deserialize(in, datagram);
-                        // TODO
-                        break;
-                    case DATAGRAM_TYPE_RESPONSE_GET:
-                        ResponseGetDatagram resGet = ResponseGetDatagram.deserialize(in, datagram);
-                        // TODO
-                        break;
-                    default:
-                        // Just ignore it.
-                        break;
-                }
-
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }*/
-
     public static void main(String[] args) throws IOException {
         Client client = new Client();
-        TextUI menu = new TextUI(client);
+        ClientUI menu = new ClientUI(client);
 
         menu.run();
     }

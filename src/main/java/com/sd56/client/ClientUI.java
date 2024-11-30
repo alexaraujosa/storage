@@ -1,4 +1,4 @@
-package com.sd56.ui;
+package com.sd56.client;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -7,14 +7,14 @@ import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
 
-import com.sd56.client.Client;
+import com.sd56.common.menu.BetterMenu;
 
-public class TextUI {
+public class ClientUI {
     private Scanner sc;
     private Client client;
     private BetterMenu menu;
 
-    public TextUI(Client client) {
+    public ClientUI(Client client) {
         this.sc = new Scanner(System.in);
         this.client = client;
         this.menu = new BetterMenu(new String[] {
