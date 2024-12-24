@@ -8,18 +8,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Set;
 
-import com.sd56.common.datagram.Datagram;
+import com.sd56.common.datagram.*;
 import com.sd56.common.datagram.Datagram.DatagramType;
-import com.sd56.common.datagram.RequestAuthDatagram;
-import com.sd56.common.datagram.RequestGetDatagram;
-import com.sd56.common.datagram.RequestMultiGetDatagram;
-import com.sd56.common.datagram.RequestMultiPutDatagram;
-import com.sd56.common.datagram.RequestPutDatagram;
-import com.sd56.common.datagram.ResponseAuthDatagram;
-import com.sd56.common.datagram.ResponseGetDatagram;
-import com.sd56.common.datagram.ResponseMultiGetDatagram;
-import com.sd56.common.datagram.ResponseMultiPutDatagram;
-import com.sd56.common.datagram.ResponsePutDatagram;
 
 public class Client {
     private final String HOST = "localhost";
@@ -193,6 +183,32 @@ public class Client {
                 default:
                     break;
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void getWhen(String key, String keyCond, byte[] valueCond){
+        try{
+            RequestGetWhenDatagram reqGetWhen = new RequestGetWhenDatagram(key, keyCond, valueCond);
+            reqGetWhen.serialize(this.out);
+            this.out.flush();
+
+            Datagram datagram = Datagram.deserialize(this.in);
+            switch (datagram.getType()){
+                case DATAGRAM_TYPE_RESPONSE_GETWHEN:
+                    ResponseGetWhenDatagram resGetWhen = ResponseGetWhenDatagram.deserialize(this.in, datagram);
+                    if (resGetWhen.getValue() == null) {
+                        System.err.println("Invalid key");
+                        return;
+                    } else{
+                        System.out.println("Value: " + new String(resGetWhen.getValue(), StandardCharsets.UTF_8));
+                    }
+                    break;
+                default:
+                    break;
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }

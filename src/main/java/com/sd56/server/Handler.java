@@ -13,17 +13,7 @@ import java.util.Set;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.sd56.common.datagram.Datagram;
-import com.sd56.common.datagram.RequestAuthDatagram;
-import com.sd56.common.datagram.RequestGetDatagram;
-import com.sd56.common.datagram.RequestMultiGetDatagram;
-import com.sd56.common.datagram.RequestMultiPutDatagram;
-import com.sd56.common.datagram.RequestPutDatagram;
-import com.sd56.common.datagram.ResponseAuthDatagram;
-import com.sd56.common.datagram.ResponseGetDatagram;
-import com.sd56.common.datagram.ResponseMultiGetDatagram;
-import com.sd56.common.datagram.ResponseMultiPutDatagram;
-import com.sd56.common.datagram.ResponsePutDatagram;
+import com.sd56.common.datagram.*;
 
 public class Handler implements Runnable {
     private final Server server;
@@ -141,6 +131,26 @@ public class Handler implements Runnable {
                             ResponseMultiPutDatagram resMultiPut = new ResponseMultiPutDatagram(multiPutValidations);
                             resMultiPut.serialize(out);
                             break;
+
+                        case DATAGRAM_TYPE_REQUEST_GETWHEN:
+                            RequestGetWhenDatagram reqGetWhen = RequestGetWhenDatagram.deserialize(in,datagram);
+                            String getKey2 = reqGetWhen.getKey();
+                            String getKeyCond = reqGetWhen.getKeyCond();
+                            byte[] getValueCond = reqGetWhen.getValueCond();
+
+                            if(server.getDbManager().get(getKeyCond) == getValueCond){
+                                byte[] getValue2 = server.getDbManager().get(getKey2);
+                                ResponseGetWhenDatagram resGetWhen = new ResponseGetWhenDatagram(getValue2);
+                                resGetWhen.serialize(out);
+                            } else {
+                                // colocar na queue
+                                GetWhenTuple tuple = new GetWhenTuple(getKeyCond,getValueCond);
+                                server.getDbManager().addGetWhenTuple(tuple);
+                                server.addGetWhenTuple(tuple);
+                            }
+
+                            break;
+
                         case DATAGRAM_TYPE_REQUEST_CLOSE:
                             System.out.println(user + " disconnected!");
                             /*

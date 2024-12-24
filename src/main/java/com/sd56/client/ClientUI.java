@@ -48,6 +48,7 @@ public class ClientUI {
         this.menu.setHandler(3, this::put);
         this.menu.setHandler(4, this::multiGet);
         this.menu.setHandler(5, this::multiPut);
+        this.menu.setHandler(6, this::getWhen);
         this.menu.run();
     }
 
@@ -162,5 +163,33 @@ public class ClientUI {
             values.put(key, value.getBytes(StandardCharsets.UTF_8));
         }
         client.multiPut(values);
+    }
+
+    private void getWhen() {
+        this.menu.clearScreen();
+        System.out.println("Insert key:");
+        String key = this.sc.nextLine();
+
+        while (key.isEmpty()) {
+            System.out.println("The key can't be empty. Try again:");
+            key = this.sc.nextLine();
+        }
+
+        System.out.println("Insert keyCond:");
+        String keyCond = this.sc.nextLine();
+
+        while (keyCond.isEmpty()) {
+            System.out.println("The keyCond can't be empty. Try again:");
+            keyCond = this.sc.nextLine();
+        }
+
+        System.out.println("Insert valueCond:");
+        String valueCond = this.sc.nextLine();
+
+        while (valueCond.isEmpty()) {
+            System.out.println("The valueCond can't be empty. Try again:");
+            valueCond = this.sc.nextLine();
+        }
+        client.getWhen(key, keyCond, valueCond.getBytes(StandardCharsets.UTF_8));
     }
 }

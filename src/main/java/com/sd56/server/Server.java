@@ -14,6 +14,7 @@ public class Server {
     private final int maxSessions;
 
     private Queue<Socket> clients;
+    private Queue<GetWhenTuple> getWhenQueue;
     private Thread[] workers;
     private ReentrantLock lock;
     private Condition notEmpty;
@@ -23,15 +24,17 @@ public class Server {
 
     public Server(int maxSessions) {
         this.clients = new LinkedList<>();
+        this.getWhenQueue = new LinkedList<>();
         this.workers = new Thread[maxSessions];
         this.lock = new ReentrantLock();
         this.notEmpty = this.lock.newCondition();
         this.currentSessions = maxSessions;
         this.maxSessions = maxSessions;
-        this.dbManager = new DatabaseManager();
+        this.dbManager = new DatabaseManager(this.getGetWhenQueue());
     }
 
     public Queue<Socket> getClients() { return this.clients; }
+    public Queue<GetWhenTuple> getGetWhenQueue() { return this.getWhenQueue; }
     public ReentrantLock getLock() { return this.lock; }
     public Condition getNotEmptyCond() { return this.notEmpty; }
 
@@ -39,6 +42,15 @@ public class Server {
     public int getCurrentSessions() { return this.currentSessions; }
     public void setCurrentSessions(int value) { this.currentSessions = value; }
     public DatabaseManager getDbManager() { return this.dbManager; }
+
+    public void addGetWhenTuple(GetWhenTuple tuple){
+        lock.lock();
+        try{
+            this.getWhenQueue.add(tuple);
+        } finally {
+            lock.unlock();
+        }
+    }
 
     public static void main(String[] args) throws IOException {
         if(args.length != 1) {
