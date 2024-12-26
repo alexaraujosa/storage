@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 
@@ -190,14 +191,17 @@ public class Client {
 
     public void getWhen(String key, String keyCond, byte[] valueCond){
         try{
+            //System.out.println("\nKEY: " + key + "\nKeyCond: " + keyCond + "\nValueCond: " + new String(valueCond, StandardCharsets.UTF_8));
             RequestGetWhenDatagram reqGetWhen = new RequestGetWhenDatagram(key, keyCond, valueCond);
             reqGetWhen.serialize(this.out);
             this.out.flush();
 
             Datagram datagram = Datagram.deserialize(this.in);
+            //System.out.println("\nDATAGRAM_TYPE: " + datagram.getType());
             switch (datagram.getType()){
                 case DATAGRAM_TYPE_RESPONSE_GETWHEN:
                     ResponseGetWhenDatagram resGetWhen = ResponseGetWhenDatagram.deserialize(this.in, datagram);
+                    //System.out.println("\nRESPONSE_GETWHEN VALUE: " + Arrays.toString(resGetWhen.getValue()));
                     if (resGetWhen.getValue() == null) {
                         System.err.println("Invalid key");
                         return;

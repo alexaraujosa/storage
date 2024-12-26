@@ -138,14 +138,17 @@ public class Handler implements Runnable {
                             String getKeyCond = reqGetWhen.getKeyCond();
                             byte[] getValueCond = reqGetWhen.getValueCond();
 
-                            if(server.getDbManager().get(getKeyCond) == getValueCond){
+                            //System.out.println("\nKey to search: " + getKey2);
+                            //System.out.println("\nValueCond got: " + Arrays.toString(server.getDbManager().get(getKeyCond)));
+                            //System.out.println("\nValueCond wanted: " + Arrays.toString(getValueCond));
+                            if (Arrays.equals(server.getDbManager().get(getKeyCond), getValueCond)) {
                                 byte[] getValue2 = server.getDbManager().get(getKey2);
+                                //System.out.println("\nValue obtained: " + Arrays.toString(getValue2));
                                 ResponseGetWhenDatagram resGetWhen = new ResponseGetWhenDatagram(getValue2);
                                 resGetWhen.serialize(out);
                             } else {
                                 // colocar na queue
-                                GetWhenTuple tuple = new GetWhenTuple(getKeyCond,getValueCond);
-                                server.getDbManager().addGetWhenTuple(tuple);
+                                GetWhenTuple tuple = new GetWhenTuple(out,getKey2, getKeyCond, getValueCond);
                                 server.addGetWhenTuple(tuple);
                             }
 

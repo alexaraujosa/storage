@@ -47,6 +47,8 @@ public class Server {
         lock.lock();
         try{
             this.getWhenQueue.add(tuple);
+            //if(this.getWhenQueue.contains(tuple))
+                //System.out.println(tuple.toString() + " successfully added.");
         } finally {
             lock.unlock();
         }
