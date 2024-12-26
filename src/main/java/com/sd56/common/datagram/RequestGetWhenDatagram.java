@@ -1,8 +1,6 @@
 package com.sd56.common.datagram;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 
 public class RequestGetWhenDatagram extends Datagram {
     private final String key;
@@ -25,17 +23,28 @@ public class RequestGetWhenDatagram extends Datagram {
     public byte[] getValueCond() { return this.valueCond; }
 
     @Override
-    public void serialize(DataOutputStream out) throws IOException {
-        super.serialize(out);
+    public byte[] serialize() throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(baos);
+
+        out.write(super.serialize());
+
         out.writeUTF(this.key);
         out.writeUTF(this.keyCond);
         out.writeInt(this.valueCond.length);
         out.write(this.valueCond);
+
+
+        return baos.toByteArray();
     }
 
-    public static RequestGetWhenDatagram deserialize(DataInputStream in, Datagram dg) throws IOException {
-        DatagramType type = dg.getType();
-        if (type != DatagramType.DATAGRAM_TYPE_REQUEST_GETWHEN) {
+    public static RequestGetWhenDatagram deserialize(byte[] data) throws IOException {
+        ByteArrayInputStream bais = new ByteArrayInputStream(data,8,data.length-8);
+        DataInputStream in = new DataInputStream(bais);
+
+        Datagram baseDatagram = Datagram.deserialize(data);
+
+        if (baseDatagram.getType() != DatagramType.DATAGRAM_TYPE_REQUEST_GETWHEN) {
             System.err.println("Invalid datagram type.");
             // TODO: Melhorar aqui também.
         }

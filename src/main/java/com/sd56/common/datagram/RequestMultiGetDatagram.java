@@ -1,8 +1,6 @@
 package com.sd56.common.datagram;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -17,15 +15,27 @@ public class RequestMultiGetDatagram extends Datagram {
     public Set<String> getKeys() { return this.keys; }
 
     @Override
-    public void serialize(DataOutputStream out) throws IOException {
-        super.serialize(out);
+    public byte[] serialize() throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(baos);
+
+        out.write(super.serialize());
+
         out.writeInt(keys.size());
         for (String key : keys)
             out.writeUTF(key);
+
+        out.flush();
+        return baos.toByteArray();
     }
 
-    public static RequestMultiGetDatagram deserialize(DataInputStream in, Datagram dg) throws IOException {
-        if (dg.getType() != DatagramType.DATAGRAM_TYPE_REQUEST_MULTIGET) {
+    public static RequestMultiGetDatagram deserialize(byte[] data) throws IOException {
+        ByteArrayInputStream bais = new ByteArrayInputStream(data,8,data.length-8);
+        DataInputStream in = new DataInputStream(bais);
+
+        Datagram baseDatagram = Datagram.deserialize(data);
+
+        if (baseDatagram.getType() != DatagramType.DATAGRAM_TYPE_REQUEST_MULTIGET) {
             System.err.println("Invalid datagram type.");
             // TODO: Better error handler
         }
@@ -36,5 +46,12 @@ public class RequestMultiGetDatagram extends Datagram {
             keys.add(in.readUTF());
 
         return new RequestMultiGetDatagram(keys);
+    }
+
+    @Override
+    public String toString() {
+        return "RequestMultiGetDatagram{" +
+                "keys=" + keys +
+                '}';
     }
 }

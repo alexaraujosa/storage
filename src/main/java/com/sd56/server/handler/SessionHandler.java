@@ -10,6 +10,8 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.sd56.common.connectors.Demultiplexer;
+import com.sd56.common.connectors.TaggedConnection;
 import com.sd56.common.datagram.Datagram;
 import com.sd56.common.datagram.RequestAuthDatagram;
 import com.sd56.common.datagram.RequestGetDatagram;
@@ -24,13 +26,13 @@ import com.sd56.server.DatabaseManager;
 public class SessionHandler implements Runnable {
     private final AtomicInteger currentSessions;
     private final DatabaseManager dbManager;
-    private final LockedResource<LinkedList<Map.Entry<DataOutputStream, Datagram>>> requests;
+    private final LockedResource<LinkedList<Map.Entry<TaggedConnection, TaggedConnection.Frame>>> requests;
     private final LockedResource<LinkedList<Socket>> clients;
 
     public SessionHandler(
         AtomicInteger currentSessions,
         DatabaseManager dbManager,
-        LockedResource<LinkedList<Map.Entry<DataOutputStream, Datagram>>> requests,
+        LockedResource<LinkedList<Map.Entry<TaggedConnection, TaggedConnection.Frame>>> requests,
         LockedResource<LinkedList<Socket>> clients
     ) {
         this.currentSessions = currentSessions;
@@ -71,21 +73,25 @@ public class SessionHandler implements Runnable {
             // for (Entry<String, byte[]> entry : this.dbManager.getDb().entrySet())
             //     System.out.println("[SERVER/DEBUG] " + entry.getKey() + " : " + new String(entry.getValue()));
 
-            try {
-                DataInputStream in = new DataInputStream(socket.getInputStream());
-                DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+            try{
+                TaggedConnection connection = new TaggedConnection(socket);
                 String user = "";
                 while (!socket.isInputShutdown()) {
-                    Datagram datagram = Datagram.deserialize(in);
+                    TaggedConnection.Frame frame = connection.receive();
+                    int threadID = frame.tag;
+                    byte[] recivedBytes = frame.data;
+
+                    Datagram datagram = Datagram.deserialize(recivedBytes);
 
                     switch (datagram.getType()) {
                         case DATAGRAM_TYPE_REQUEST_AUTHENTICATION:
-                            RequestAuthDatagram reqAuth = RequestAuthDatagram.deserialize(in, datagram);
+                            RequestAuthDatagram reqAuth = RequestAuthDatagram.deserialize(recivedBytes);
+                            System.out.println(reqAuth);
 
                             Boolean authValidation = this.dbManager.authentication(reqAuth.getUsername(), reqAuth.getPassword());
                             user = reqAuth.getUsername();
                             ResponseAuthDatagram resAuth = new ResponseAuthDatagram(authValidation);
-                            resAuth.serialize(out);
+                            connection.send(threadID,resAuth.serialize());
                             /* A ideia aqui é verificar os valores na DB... como getDB.Manager().Authentication tem um lock
                              * ela é atomica e locks a este nivel não devem ser necessários.
                             l.lock();
@@ -109,50 +115,45 @@ public class SessionHandler implements Runnable {
                             */
                             break;
                         case DATAGRAM_TYPE_REQUEST_PUT:
-                            RequestPutDatagram reqPut = RequestPutDatagram.deserialize(in,datagram);
                             this.requests.lock();
                             try {
-                                this.requests.getResource().add(new AbstractMap.SimpleEntry<>(out, reqPut));
+                                this.requests.getResource().add(new AbstractMap.SimpleEntry<>(connection, frame));
                                 this.requests.signalAll();
                             } finally {
                                 this.requests.unlock();
                             }
                             break;
                         case DATAGRAM_TYPE_REQUEST_GET:
-                            RequestGetDatagram reqGet = RequestGetDatagram.deserialize(in,datagram);
                             this.requests.lock();
                             try {
-                                this.requests.getResource().add(new AbstractMap.SimpleEntry<>(out, reqGet));
+                                this.requests.getResource().add(new AbstractMap.SimpleEntry<>(connection, frame));
                                 this.requests.signalAll();
                             } finally {
                                 this.requests.unlock();
                             }
                             break;
                         case DATAGRAM_TYPE_REQUEST_MULTIGET:
-                            RequestMultiGetDatagram reqMultiGet = RequestMultiGetDatagram.deserialize(in, datagram);
                             this.requests.lock();
                             try {
-                                this.requests.getResource().add(new AbstractMap.SimpleEntry<>(out, reqMultiGet));
+                                this.requests.getResource().add(new AbstractMap.SimpleEntry<>(connection, frame));
                                 this.requests.signalAll();
                             } finally {
                                 this.requests.unlock();
                             }
                             break;
                         case DATAGRAM_TYPE_REQUEST_MULTIPUT:
-                            RequestMultiPutDatagram reqMultiPut = RequestMultiPutDatagram.deserialize(in, datagram);
                             this.requests.lock();
                             try {
-                                this.requests.getResource().add(new AbstractMap.SimpleEntry<>(out, reqMultiPut));
+                                this.requests.getResource().add(new AbstractMap.SimpleEntry<>(connection, frame));
                                 this.requests.signalAll();
                             } finally {
                                 this.requests.unlock();
                             }
                             break;
                         case DATAGRAM_TYPE_REQUEST_GETWHEN:
-                            RequestGetWhenDatagram reqGetWhen = RequestGetWhenDatagram.deserialize(in,datagram);
                             this.requests.lock();
                             try {
-                                this.requests.getResource().add(new AbstractMap.SimpleEntry<>(out, reqGetWhen));
+                                this.requests.getResource().add(new AbstractMap.SimpleEntry<>(connection, frame));
                                 this.requests.signalAll();
                             } finally {
                                 this.requests.unlock();
@@ -182,6 +183,7 @@ public class SessionHandler implements Runnable {
                 System.out.println("A conexão foi encerrada, já não há mais nada a ler!");;
             } catch (IOException e) {
                 e.printStackTrace();
+
             }
         }
     }

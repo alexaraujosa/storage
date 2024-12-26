@@ -1,8 +1,6 @@
 package com.sd56.common.datagram;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,8 +15,12 @@ public class ResponseMultiGetDatagram extends Datagram {
     public Map<String, byte[]> getValues() { return this.values; }
 
     @Override
-    public void serialize(DataOutputStream out) throws IOException {
-        super.serialize(out);
+    public byte[] serialize() throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(baos);
+
+        out.write(super.serialize());
+
         out.writeInt(values.size());
         for(Map.Entry<String, byte[]> entry : values.entrySet()) {
             out.writeUTF(entry.getKey());
@@ -30,10 +32,18 @@ public class ResponseMultiGetDatagram extends Datagram {
                 out.writeBoolean(false);
             }
         }
+
+        out.flush();
+        return baos.toByteArray();
     }
 
-    public static ResponseMultiGetDatagram deserialize(DataInputStream in, Datagram dg) throws IOException {
-        if (dg.getType() != DatagramType.DATAGRAM_TYPE_RESPONSE_MULTIGET) {
+    public static ResponseMultiGetDatagram deserialize(byte[] data) throws IOException {
+        ByteArrayInputStream bais = new ByteArrayInputStream(data,8,data.length-8);
+        DataInputStream in = new DataInputStream(bais);
+
+        Datagram baseDatagram = Datagram.deserialize(data);
+
+        if (baseDatagram.getType() != DatagramType.DATAGRAM_TYPE_RESPONSE_MULTIGET) {
             System.err.println("Invalid datagram type.");
             // TODO: Better error handler
         }
@@ -54,4 +64,10 @@ public class ResponseMultiGetDatagram extends Datagram {
         return new ResponseMultiGetDatagram(values);
     }
 
+    @Override
+    public String toString() {
+        return "ResponseMultiGetDatagram{" +
+                "values=" + values +
+                '}';
+    }
 }

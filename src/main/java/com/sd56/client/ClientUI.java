@@ -33,8 +33,6 @@ public class ClientUI {
      * Coloca a interface em execução.
      */
     public void run() {
-        this.client.tryConnect();
-
         this.menu.setPreCondition(1, () -> !this.client.isAuthenticated());
         this.menu.setPreCondition(2, () -> this.client.isAuthenticated());
         this.menu.setPreCondition(3, () -> this.client.isAuthenticated());

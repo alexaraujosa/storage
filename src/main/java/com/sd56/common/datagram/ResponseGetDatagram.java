@@ -1,8 +1,7 @@
 package com.sd56.common.datagram;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.util.Arrays;
 
 public class ResponseGetDatagram extends Datagram {
     private final byte[] value;
@@ -17,8 +16,12 @@ public class ResponseGetDatagram extends Datagram {
     }
 
     @Override
-    public void serialize(DataOutputStream out) throws IOException {
-        super.serialize(out);
+    public byte[] serialize() throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(baos);
+
+        out.write(super.serialize());
+
         if (value != null) {
             out.writeBoolean(true);
             out.writeInt(value.length);
@@ -26,11 +29,18 @@ public class ResponseGetDatagram extends Datagram {
         } else {
             out.writeBoolean(false);
         }
+
+        out.flush();
+        return baos.toByteArray();
     }
 
-    public static ResponseGetDatagram deserialize(DataInputStream in, Datagram dg) throws IOException {
-        DatagramType type = dg.getType();
-        if (type != DatagramType.DATAGRAM_TYPE_RESPONSE_GET) {
+    public static ResponseGetDatagram deserialize(byte[] data) throws IOException {
+        ByteArrayInputStream bais = new ByteArrayInputStream(data,8,data.length-8);
+        DataInputStream in = new DataInputStream(bais);
+
+        Datagram baseDatagram = Datagram.deserialize(data);
+
+        if (baseDatagram.getType() != DatagramType.DATAGRAM_TYPE_RESPONSE_GET) {
             System.err.println("Invalid datagram type.");
             // TODO: Melhorar aqui também.
         }
@@ -42,5 +52,12 @@ public class ResponseGetDatagram extends Datagram {
         }
 
         return new ResponseGetDatagram(value);
-    } 
+    }
+
+    @Override
+    public String toString() {
+        return "ResponseGetDatagram{" +
+                "value=" + Arrays.toString(value) +
+                '}';
+    }
 }

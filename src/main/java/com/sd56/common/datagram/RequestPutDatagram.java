@@ -1,8 +1,7 @@
 package com.sd56.common.datagram;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
+import java.util.Arrays;
 
 public class RequestPutDatagram extends Datagram {
     private final String key;
@@ -23,16 +22,27 @@ public class RequestPutDatagram extends Datagram {
     }
 
     @Override
-    public void serialize(DataOutputStream out) throws IOException {
-        super.serialize(out);
+    public byte[] serialize() throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(baos);
+
+        out.write(super.serialize());
+
         out.writeUTF(key);
         out.writeInt(value.length);
         out.write(value);
+
+        out.flush();
+        return baos.toByteArray();
     }
 
-    public static RequestPutDatagram deserialize(DataInputStream in, Datagram dg) throws IOException {
-        DatagramType type = dg.getType();
-        if (type != DatagramType.DATAGRAM_TYPE_REQUEST_PUT) {
+    public static RequestPutDatagram deserialize(byte[] data) throws IOException {
+        ByteArrayInputStream bais = new ByteArrayInputStream(data,8,data.length-8);
+        DataInputStream in = new DataInputStream(bais);
+
+        Datagram baseDatagram = Datagram.deserialize(data);
+
+        if (baseDatagram.getType() != DatagramType.DATAGRAM_TYPE_REQUEST_PUT) {
             System.err.println("Invalid datagram type.");
             // TODO: Melhorar aqui também.
         }
@@ -41,5 +51,13 @@ public class RequestPutDatagram extends Datagram {
         byte[] value = in.readNBytes(length);
 
         return new RequestPutDatagram(key, value);
+    }
+
+    @Override
+    public String toString() {
+        return "RequestPutDatagram{" +
+                "key='" + key + '\'' +
+                ", value=" + Arrays.toString(value) +
+                '}';
     }
 }

@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Set;
 
+import com.sd56.common.connectors.TaggedConnection;
 import com.sd56.common.datagram.Datagram;
 import com.sd56.common.datagram.RequestGetDatagram;
 import com.sd56.common.datagram.RequestGetWhenDatagram;
@@ -24,12 +25,12 @@ import com.sd56.server.DatabaseManager;
 import com.sd56.server.GetWhenTuple;
 
 public class RequestHandler implements Runnable {
-    private final LockedResource<LinkedList<Map.Entry<DataOutputStream, Datagram>>> requests;
+    private final LockedResource<LinkedList<Map.Entry<TaggedConnection, TaggedConnection.Frame>>> requests;
     private final LockedResource<LinkedList<GetWhenTuple>> getWhen;
     private final DatabaseManager dbManager;
 
     public RequestHandler(
-        LockedResource<LinkedList<Map.Entry<DataOutputStream, Datagram>>> requests,
+        LockedResource<LinkedList<Map.Entry<TaggedConnection, TaggedConnection.Frame>>> requests,
         LockedResource<LinkedList<GetWhenTuple>> getWhen,
         DatabaseManager dbManager
     ) {
@@ -38,7 +39,7 @@ public class RequestHandler implements Runnable {
         this.dbManager = dbManager;
     }
 
-    private Map.Entry<DataOutputStream, Datagram> getRequestEntry() throws InterruptedException {
+    private Map.Entry<TaggedConnection, TaggedConnection.Frame> getRequestEntry() throws InterruptedException {
         this.requests.lock();
         try {
             while (this.requests.getResource().isEmpty())
@@ -54,38 +55,42 @@ public class RequestHandler implements Runnable {
     public void run() {
         while (true) { 
             try {
-                Map.Entry<DataOutputStream, Datagram> entry = this.getRequestEntry();
-                Datagram request = entry.getValue();
-                DataOutputStream out = entry.getKey(); 
+                Map.Entry<TaggedConnection, TaggedConnection.Frame> entry = this.getRequestEntry();
+                TaggedConnection.Frame frame = entry.getValue();
+                int tag = frame.tag;
+                byte[] dg = frame.data;
+
+                Datagram request = Datagram.deserialize(dg);
+                TaggedConnection con = entry.getKey();
                 switch (request.getType()) {
                     case DATAGRAM_TYPE_REQUEST_GET:
-                        RequestGetDatagram getDg = (RequestGetDatagram) request;
+                        RequestGetDatagram getDg = RequestGetDatagram.deserialize(dg);
                         String getKey = getDg.getKey();
                         byte[] getValue = this.dbManager.get(getKey);
                         ResponseGetDatagram resGet = new ResponseGetDatagram(getValue);
-                        resGet.serialize(out);
+                        con.send(tag, resGet.serialize());
                         break;
                     case DATAGRAM_TYPE_REQUEST_PUT:
-                        RequestPutDatagram putDg = (RequestPutDatagram) request;
+                        RequestPutDatagram putDg = RequestPutDatagram.deserialize(dg);
                         String putKey = putDg.getKey();
                         byte[] putValue = putDg.getValue();
                         this.dbManager.put(putKey, putValue);
                         boolean putValidation = this.dbManager.getDb().containsKey(putKey) && Arrays.equals(this.dbManager.getDb().get(putKey), putValue);
                         ResponsePutDatagram resPut = new ResponsePutDatagram(putValidation);
-                        resPut.serialize(out);
+                        con.send(tag, resPut.serialize());
                         break;
                     case DATAGRAM_TYPE_REQUEST_MULTIGET:
-                        RequestMultiGetDatagram multigetDg = (RequestMultiGetDatagram) request;
+                        RequestMultiGetDatagram multigetDg = RequestMultiGetDatagram.deserialize(dg);
                         Set<String> multiGetKeys = multigetDg.getKeys();
                         Map<String, byte[]> multiGetValues = new HashMap<>();
                         for (String key : multiGetKeys) {
                             multiGetValues.put(key, this.dbManager.getDb().get(key));
                         }
                         ResponseMultiGetDatagram resMultiGet = new ResponseMultiGetDatagram(multiGetValues);
-                        resMultiGet.serialize(out);
+                        con.send(tag, resMultiGet.serialize());
                         break;
                     case DATAGRAM_TYPE_REQUEST_MULTIPUT:
-                        RequestMultiPutDatagram multiputDg = (RequestMultiPutDatagram) request;
+                        RequestMultiPutDatagram multiputDg = RequestMultiPutDatagram.deserialize(dg);
                         Map<String, byte[]> multiPutValues = multiputDg.getValues();
                         Map<String, Boolean> multiPutValidations = new HashMap<>();
                         for (Map.Entry<String, byte[]> multiPutEntry : multiPutValues.entrySet()) {
@@ -96,10 +101,10 @@ public class RequestHandler implements Runnable {
                         }
 
                         ResponseMultiPutDatagram resMultiPut = new ResponseMultiPutDatagram(multiPutValidations);
-                        resMultiPut.serialize(out);
+                        con.send(tag, resMultiPut.serialize());
                         break;
                     case DATAGRAM_TYPE_REQUEST_GETWHEN:
-                        RequestGetWhenDatagram getWhenDg = (RequestGetWhenDatagram) request;
+                        RequestGetWhenDatagram getWhenDg = RequestGetWhenDatagram.deserialize(dg);
                         String getKey2 = getWhenDg.getKey();
                         String getKeyCond = getWhenDg.getKeyCond();
                         byte[] getValueCond = getWhenDg.getValueCond();
@@ -111,10 +116,10 @@ public class RequestHandler implements Runnable {
                             byte[] getValue2 = this.dbManager.get(getKey2);
                             //System.out.println("\nValue obtained: " + Arrays.toString(getValue2));
                             ResponseGetWhenDatagram resGetWhen = new ResponseGetWhenDatagram(getValue2);
-                            resGetWhen.serialize(out);
+                            con.send(tag, resGetWhen.serialize());
                         } else {
                             // colocar na queue
-                            GetWhenTuple tuple = new GetWhenTuple(out,getKey2, getKeyCond, getValueCond);
+                            GetWhenTuple tuple = new GetWhenTuple(con, frame, getKey2, getKeyCond, getValueCond);
                             this.getWhen.lock();
                             try {
                                 this.getWhen.getResource().add(tuple);

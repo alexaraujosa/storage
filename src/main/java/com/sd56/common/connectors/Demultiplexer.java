@@ -41,6 +41,7 @@ public class Demultiplexer implements AutoCloseable {
                     try{
                         Entry e = get(f.tag);
                         e.queue.add(f.data);
+                        System.out.println("Coloquei uma mensagem no demultiplexer");
                         e.cond.signal();
                     } finally{
                         l.unlock();
@@ -73,7 +74,8 @@ public class Demultiplexer implements AutoCloseable {
         l.lock();
         try {
             Entry e = get(tag);
-            while(!e.queue.isEmpty() && exception == null) e.cond.await();
+            while(e.queue.isEmpty() && exception == null) e.cond.await();
+            System.out.println("Tentei tirar mensagem do demultiplexer");
             byte[] b = e.queue.poll();
             if(b != null){
                 return b;

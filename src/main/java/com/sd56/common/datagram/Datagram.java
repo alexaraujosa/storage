@@ -1,8 +1,6 @@
 package com.sd56.common.datagram;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 
 public class Datagram {
     protected final static int version = 1;
@@ -35,12 +33,23 @@ public class Datagram {
         return "{[DATAGRAM] | VERSION: " + version + " | TYPE: " + type + "}";
     }
 
-    public void serialize(DataOutputStream out) throws IOException {
-        out.writeInt(this.version);
+    public byte[] serialize() throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(baos);
+
+        out.writeInt(version);
         out.writeInt(this.type.ordinal());
+
+        //TODO Acho que o flush não é necessário aqui mas podemos discutir isso
+        //out.flush();
+
+        return baos.toByteArray();
     }
 
-    public static Datagram deserialize(DataInputStream in) throws IOException {
+    public static Datagram deserialize(byte[] data) throws IOException {
+        ByteArrayInputStream bais = new ByteArrayInputStream(data);
+        DataInputStream in = new DataInputStream(bais);
+
         int desVersion = in.readInt();
         if (desVersion != Datagram.version) {
             System.err.println("Invalid version value.");

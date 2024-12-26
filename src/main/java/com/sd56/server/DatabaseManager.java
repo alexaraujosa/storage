@@ -71,7 +71,8 @@ public class DatabaseManager {
             if(g.getFlag() == 1){
                 byte[] value = this.getDb().get(g.getKey());
                 ResponseGetWhenDatagram resGetWhen = new ResponseGetWhenDatagram(value);
-                resGetWhen.serialize(g.getDataOutputStream());
+                g.getTaggedConnection().send(g.getFrame().tag, resGetWhen.serialize());
+
                 this.removeGetWhenTple(g);
             }
         }

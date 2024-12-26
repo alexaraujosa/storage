@@ -1,8 +1,6 @@
 package com.sd56.common.datagram;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,17 +15,29 @@ public class ResponseMultiPutDatagram extends Datagram {
     public Map<String, Boolean> getValidations() { return this.validations; }
 
     @Override
-    public void serialize(DataOutputStream out) throws IOException {
-        super.serialize(out);
+    public byte[] serialize() throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        DataOutputStream out = new DataOutputStream(baos);
+
+        out.write(super.serialize());
+
         out.writeInt(validations.size());
         for (Map.Entry<String, Boolean> entry : validations.entrySet()) {
             out.writeUTF(entry.getKey());
             out.writeBoolean(entry.getValue());
         }
+
+        out.flush();
+        return baos.toByteArray();
     }
 
-    public static ResponseMultiPutDatagram deserialize(DataInputStream in, Datagram dg) throws IOException {
-        if (dg.getType() != DatagramType.DATAGRAM_TYPE_RESPONSE_MULTIPUT) {
+    public static ResponseMultiPutDatagram deserialize(byte[] data) throws IOException {
+        ByteArrayInputStream bais = new ByteArrayInputStream(data,8,data.length-8);
+        DataInputStream in = new DataInputStream(bais);
+
+        Datagram baseDatagram = Datagram.deserialize(data);
+
+        if (baseDatagram.getType() != DatagramType.DATAGRAM_TYPE_RESPONSE_MULTIPUT) {
             System.err.println("Invalid datagram type.");
             // TODO: Better error handler
         }
@@ -41,5 +51,12 @@ public class ResponseMultiPutDatagram extends Datagram {
         }
 
         return new ResponseMultiPutDatagram(validations);
+    }
+
+    @Override
+    public String toString() {
+        return "ResponseMultiPutDatagram{" +
+                "validations=" + validations +
+                '}';
     }
 }

@@ -1,5 +1,6 @@
 package com.sd56.server;
 
+import com.sd56.common.connectors.TaggedConnection;
 import com.sd56.common.datagram.Datagram;
 import com.sd56.server.handler.RequestHandler;
 import com.sd56.server.handler.SessionHandler;
@@ -20,7 +21,7 @@ public class Server {
     private final static int PORT = 1337;
     private final AtomicInteger currentSessions;
     private final LockedResource<LinkedList<Socket>> clients;
-    private final LockedResource<LinkedList<Map.Entry<DataOutputStream, Datagram>>> requests;
+    private final LockedResource<LinkedList<Map.Entry<TaggedConnection, TaggedConnection.Frame>>> requests;
     private final LockedResource<LinkedList<GetWhenTuple>> getWhen;
     private final DatabaseManager dbManager;
     private final Thread[] sessionWorkers;
@@ -42,7 +43,7 @@ public class Server {
     }
 
     public LockedResource<LinkedList<Socket>> getClients() { return this.clients; }
-    public LockedResource<LinkedList<Map.Entry<DataOutputStream, Datagram>>> getRequests() { return this.requests; }
+    public LockedResource<LinkedList<Map.Entry<TaggedConnection, TaggedConnection.Frame>>> getRequests() { return this.requests; }
     public LockedResource<LinkedList<GetWhenTuple>> getWhenLR() { return this.getWhen; }
     public DatabaseManager getDbManager() { return this.dbManager; }
     public ReentrantLock getLock() { return this.lock; }
