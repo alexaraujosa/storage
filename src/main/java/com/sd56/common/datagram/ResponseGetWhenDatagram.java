@@ -30,7 +30,7 @@ public class ResponseGetWhenDatagram extends Datagram {
 
     public static ResponseGetWhenDatagram deserialize(DataInputStream in, Datagram dg) throws IOException {
         DatagramType type = dg.getType();
-        if (type != DatagramType.DATAGRAM_TYPE_RESPONSE_GET) {
+        if (type != DatagramType.DATAGRAM_TYPE_RESPONSE_GETWHEN) {
             System.err.println("Invalid datagram type.");
             // TODO: Melhorar aqui também.
         }
