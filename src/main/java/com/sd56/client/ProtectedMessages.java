@@ -7,7 +7,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class ProtectedMessages {
     private final ReentrantLock lock = new ReentrantLock();
-    private final Queue<byte[]> messagesToSend;
+    private final Queue<ClientRequestQueueEntry<Object>> messagesToSend;
     private Condition isEmpty = lock.newCondition();
 
     public ProtectedMessages() {
@@ -22,11 +22,11 @@ public class ProtectedMessages {
         return this.isEmpty;
     }
 
-    public Queue<byte[]> getMessagesToSend() {
+    public Queue<ClientRequestQueueEntry<Object>> getMessagesToSend() {
         return this.messagesToSend;
     }
 
-    public byte[] getMessage() {
+    public ClientRequestQueueEntry<Object> getMessage() {
         lock.lock();
         try{
             return messagesToSend.poll();
@@ -35,10 +35,10 @@ public class ProtectedMessages {
         }
     }
 
-    public void setMessage(byte[] message) {
+    public void setMessage(ClientRequestQueueEntry<Object> entry) {
         lock.lock();
         try {
-            messagesToSend.add(message);
+            messagesToSend.add(entry);
             this.isEmpty.signal();
         } finally {
             lock.unlock();

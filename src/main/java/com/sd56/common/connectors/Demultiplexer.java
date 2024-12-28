@@ -1,5 +1,7 @@
 package com.sd56.common.connectors;
 
+import com.sd56.common.util.logger.Logger;
+
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.HashMap;
@@ -33,6 +35,8 @@ public class Demultiplexer implements AutoCloseable {
     }
 
     public void start(){
+        Logger logger = Logger.getGlobalLogger();
+
         new Thread(() -> {
             try{
                 for(;;){
@@ -41,7 +45,7 @@ public class Demultiplexer implements AutoCloseable {
                     try{
                         Entry e = get(f.tag);
                         e.queue.add(f.data);
-                        System.out.println("Coloquei uma mensagem no demultiplexer");
+                        logger.debug("[DEMUX] Attempting to enqueue a message.");
                         e.cond.signal();
                     } finally{
                         l.unlock();
@@ -57,7 +61,8 @@ public class Demultiplexer implements AutoCloseable {
                 } finally {
                     l.unlock();
                 }
-                throw new RuntimeException(e);
+
+                // if (!Thread.currentThread().isInterrupted()) throw new RuntimeException(e);
             }
         }).start();
     }
@@ -71,11 +76,14 @@ public class Demultiplexer implements AutoCloseable {
     }
 
     public byte[] receive(int tag) throws IOException, InterruptedException {
+        Logger logger = Logger.getGlobalLogger();
+
         l.lock();
         try {
             Entry e = get(tag);
             while(e.queue.isEmpty() && exception == null) e.cond.await();
-            System.out.println("Tentei tirar mensagem do demultiplexer");
+            logger.debug("[DEMUX] Attempting to dequeue a message.");
+
             byte[] b = e.queue.poll();
             if(b != null){
                 return b;
