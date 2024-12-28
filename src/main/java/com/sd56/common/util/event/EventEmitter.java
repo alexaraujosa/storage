@@ -7,10 +7,10 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
 
-public class EventEmmiter {
+public class EventEmitter {
     private final LockedResource<Map<String, Queue<EventListener>>, ?> listeners;
 
-    public EventEmmiter() {
+    public EventEmitter() {
         this.listeners = new LockedResource<>(new HashMap<>());
     }
 

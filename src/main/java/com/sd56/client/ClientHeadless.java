@@ -1,10 +1,8 @@
 package com.sd56.client;
 
-import com.sd56.common.exceptions.ConnectionException;
 import com.sd56.common.exceptions.DataFileException;
 import com.sd56.common.exceptions.SDException;
 import com.sd56.common.util.LockedResource;
-import com.sd56.common.util.Nullable;
 import com.sd56.common.util.logger.Logger;
 
 import java.io.*;
@@ -96,7 +94,7 @@ public class ClientHeadless implements IClientImpl {
         try {
             ClientRequestQueueEntry<Object> entry = this.client.get(key);
 
-            this.client.getEventEmmiter().once(String.valueOf(entry.getId()), (e) -> {
+            this.client.getEventEmitter().once(String.valueOf(entry.getId()), (e) -> {
                 entry.lock();
 //                byte[] value = entry.exec(r -> r);
 //                if (value == null) {
@@ -164,7 +162,8 @@ public class ClientHeadless implements IClientImpl {
 
             ClientRequestQueueEntry<Object> entry = this.client.put(key, value);
 
-            this.client.getEventEmmiter().once(String.valueOf(entry.getId()), (e) -> {
+            this.client.getEventEmitter().once(String.valueOf(entry.getId()), (e) -> {
+                logger.debug("PUT " + key + " EVENT: " + e);
                 entry.lock();
                 if (!entry.succeeded()) {
                     if (entry.getError() != null) {
@@ -221,7 +220,7 @@ public class ClientHeadless implements IClientImpl {
 //            }
             ClientRequestQueueEntry<Object> entry = this.client.multiGet(new HashSet<>(payload.values()));
 
-            this.client.getEventEmmiter().once(String.valueOf(entry.getId()), (e) -> {
+            this.client.getEventEmitter().once(String.valueOf(entry.getId()), (e) -> {
                 entry.lock();
                 if (!entry.succeeded()) {
                     if (entry.getError() != null) {
@@ -306,7 +305,7 @@ public class ClientHeadless implements IClientImpl {
                             ))
             );
 
-            this.client.getEventEmmiter().once(String.valueOf(entry.getId()), (e) -> {
+            this.client.getEventEmitter().once(String.valueOf(entry.getId()), (e) -> {
                 entry.lock();
                 if (!entry.succeeded()) {
                     if (entry.getError() != null) {
@@ -352,7 +351,7 @@ public class ClientHeadless implements IClientImpl {
         try {
             ClientRequestQueueEntry<?> entry = client.getWhen(key, keyCond, valueCond);
 
-            this.client.getEventEmmiter().once(String.valueOf(entry.getId()), (e) -> {
+            this.client.getEventEmitter().once(String.valueOf(entry.getId()), (e) -> {
                 entry.lock();
                 if (!entry.succeeded()) {
                     if (entry.getError() != null) {

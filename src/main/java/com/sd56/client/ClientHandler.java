@@ -4,7 +4,6 @@ import com.sd56.common.connectors.Demultiplexer;
 import com.sd56.common.datagram.*;
 import com.sd56.common.exceptions.ConnectionException;
 import com.sd56.common.exceptions.SDException;
-import com.sd56.common.util.LockedResource;
 import com.sd56.common.util.event.Event;
 import com.sd56.common.util.logger.Logger;
 
@@ -69,7 +68,7 @@ public class ClientHandler implements Runnable {
                 Datagram header;
                 Datagram dg = Datagram.deserialize(message.exec(r -> r));
                 switch (dg.getType()) {
-                    case DATAGRAM_TYPE_REQUEST_AUTHENTICATION:
+                    case DATAGRAM_TYPE_REQUEST_AUTHENTICATION: {
                         demultiplexer.send(this.tag, message.exec(r -> r));
 
                         logger.info("Awaiting for authentication...");
@@ -81,17 +80,17 @@ public class ClientHandler implements Runnable {
                         try {
                             switch (header.getType()) {
                                 case DATAGRAM_TYPE_RESPONSE_AUTHENTICATION:
-                                        ResponseAuthDatagram resAuth = ResponseAuthDatagram.deserialize(recivedBytes);
-                                        logger.debug("[AUTH] DATAGRAM: " + resAuth);
+                                    ResponseAuthDatagram resAuth = ResponseAuthDatagram.deserialize(recivedBytes);
+                                    logger.debug("[AUTH] DATAGRAM: " + resAuth);
 
-                                        if (!resAuth.getValidation()) {
-                                            message.setResponse("Invalid credentials.");
-                                            message.setSuccess(false);
-                                            break;
-                                        }
+                                    if (!resAuth.getValidation()) {
+                                        message.setResponse("Invalid credentials.");
+                                        message.setSuccess(false);
+                                        break;
+                                    }
 
-                                        this.client.setAuthenticated(true);
-                                        message.setResponse(true);
+                                    this.client.setAuthenticated(true);
+                                    message.setResponse(true);
                                     break;
                                 default:
 //                                    logger.error("[AUTH] Received wrong datagram type: " + header.getType());
@@ -113,15 +112,21 @@ public class ClientHandler implements Runnable {
                             });
                         } finally {
                             message.lock();
+                            // Signal synchronous calls
                             message.signalAll();
+                            // Signal asynchronous calls
+                            this.client.getEventEmitter().emit(new Event(String.valueOf(message.getId()), null));
                             message.unlock();
                         }
                         break;
-                    case DATAGRAM_TYPE_REQUEST_PUT:
+                    }
+                    case DATAGRAM_TYPE_REQUEST_PUT: {
                         demultiplexer.send(this.tag, message.exec(r -> r));
 
                         recivedBytes = demultiplexer.receive(this.tag);
                         header = Datagram.deserialize(recivedBytes);
+
+                        logger.debug("[WK" + this.tag + "] PUT HEADER: " + header);
 
 //                        try {
 //                            switch (header.getType()) {
@@ -173,11 +178,15 @@ public class ClientHandler implements Runnable {
                             });
                         } finally {
                             message.lock();
+                            // Signal synchronous calls
                             message.signalAll();
+                            // Signal asynchronous calls
+                            this.client.getEventEmitter().emit(new Event(String.valueOf(message.getId()), null));
                             message.unlock();
                         }
                         break;
-                    case DATAGRAM_TYPE_REQUEST_GET:
+                    }
+                    case DATAGRAM_TYPE_REQUEST_GET: {
                         demultiplexer.send(this.tag, message.exec(r -> r));
 
                         recivedBytes = demultiplexer.receive(this.tag);
@@ -230,11 +239,12 @@ public class ClientHandler implements Runnable {
                             // Signal synchronous calls
                             message.signalAll();
                             // Signal asynchronous calls
-                            this.client.getEventEmmiter().emit(new Event(String.valueOf(message.getId()), null));
+                            this.client.getEventEmitter().emit(new Event(String.valueOf(message.getId()), null));
                             message.unlock();
                         }
                         break;
-                    case DATAGRAM_TYPE_REQUEST_MULTIGET:
+                    }
+                    case DATAGRAM_TYPE_REQUEST_MULTIGET: {
                         demultiplexer.send(this.tag, message.exec(r -> r));
 
                         recivedBytes = demultiplexer.receive(this.tag);
@@ -292,11 +302,12 @@ public class ClientHandler implements Runnable {
                             // Signal synchronous calls
                             message.signalAll();
                             // Signal asynchronous calls
-                            this.client.getEventEmmiter().emit(new Event(String.valueOf(message.getId()), null));
+                            this.client.getEventEmitter().emit(new Event(String.valueOf(message.getId()), null));
                             message.unlock();
                         }
                         break;
-                    case DATAGRAM_TYPE_REQUEST_MULTIPUT:
+                    }
+                    case DATAGRAM_TYPE_REQUEST_MULTIPUT: {
                         demultiplexer.send(this.tag, message.exec(r -> r));
 
                         recivedBytes = demultiplexer.receive(this.tag);
@@ -347,11 +358,12 @@ public class ClientHandler implements Runnable {
                             // Signal synchronous calls
                             message.signalAll();
                             // Signal asynchronous calls
-                            this.client.getEventEmmiter().emit(new Event(String.valueOf(message.getId()), null));
+                            this.client.getEventEmitter().emit(new Event(String.valueOf(message.getId()), null));
                             message.unlock();
                         }
                         break;
-                    case DATAGRAM_TYPE_REQUEST_GETWHEN:
+                    }
+                    case DATAGRAM_TYPE_REQUEST_GETWHEN: {
                         demultiplexer.send(this.tag, message.exec(r -> r));
 
                         recivedBytes = demultiplexer.receive(this.tag);
@@ -400,28 +412,26 @@ public class ClientHandler implements Runnable {
                             // Signal synchronous calls
                             message.signalAll();
                             // Signal asynchronous calls
-                            this.client.getEventEmmiter().emit(new Event(String.valueOf(message.getId()), null));
+                            this.client.getEventEmitter().emit(new Event(String.valueOf(message.getId()), null));
                             message.unlock();
                         }
                         break;
-                    case DATAGRAM_TYPE_REQUEST_CLOSE:
+                    }
+                    case DATAGRAM_TYPE_REQUEST_CLOSE: {
                         demultiplexer.send(this.tag, message.exec(r -> r));
                         demultiplexer.close();
                         this.client.closeWorkers();
                         System.exit(0);
                         break;
+                    }
                     default:
                         System.out.println("Error converting Datagram in client Thread");
                         break;
                 }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
             } catch (Exception e) {
+                logger.error("[WK" + this.tag + "] Uncaught exception: " + SDException.getStackTrace(e));
                 throw new RuntimeException(e);
             }
-
         }
     }
 }

@@ -13,9 +13,7 @@ import com.sd56.common.exceptions.ConnectionException;
 import com.sd56.common.exceptions.DataFileException;
 import com.sd56.common.exceptions.SDException;
 import com.sd56.common.menu.CLI.CLI;
-import com.sd56.common.util.LockedResource;
-import com.sd56.common.util.Nullable;
-import com.sd56.common.util.event.EventEmmiter;
+import com.sd56.common.util.event.EventEmitter;
 import com.sd56.common.util.logger.Logger;
 import com.sd56.common.util.logger.LoggerLevel;
 import com.sd56.common.util.logger.LoggerOptions;
@@ -32,7 +30,7 @@ public class Client {
 //    private final LockedResource<Queue<ClientRequestQueueEntry>> requestQueue;
 //    private final ClientRequestQueue requestQueue;
 
-    private EventEmmiter eventEmmiter;
+    private EventEmitter eventEmitter;
     private Logger logger;
 
     //TODO Acrescentar numero de workers
@@ -42,7 +40,7 @@ public class Client {
         this.messagesToSend = new ProtectedMessages();
 //        this.requestQueue = new LockedResource<>(new LinkedList<>());
 //        this.requestQueue = new ClientRequestQueue();
-        this.eventEmmiter = new EventEmmiter();
+        this.eventEmitter = new EventEmitter();
         this.logger = logger;
 
         try {
@@ -59,8 +57,8 @@ public class Client {
 //        return this.requestQueue;
 //    }
 
-    public EventEmmiter getEventEmmiter() {
-        return this.eventEmmiter;
+    public EventEmitter getEventEmitter() {
+        return this.eventEmitter;
     }
 
     public Logger getLogger() {

@@ -126,7 +126,7 @@ public class ClientUI implements IClientImpl {
 
             ClientRequestQueueEntry<?> entry = client.get(key);
             String finalKey = key;
-            this.client.getEventEmmiter().once(String.valueOf(entry.getId()), (e) -> {
+            this.client.getEventEmitter().once(String.valueOf(entry.getId()), (e) -> {
                 logger.debug("[CUI] GET " + finalKey + " event: " + e);
                 entry.lock();
                 logger.debug("[CUI] GET " + finalKey + " response: " + entry);
@@ -170,7 +170,7 @@ public class ClientUI implements IClientImpl {
 
             ClientRequestQueueEntry<?> entry = client.put(key, value);
             String finalKey = key;
-            this.client.getEventEmmiter().once(String.valueOf(entry.getId()), (e) -> {
+            this.client.getEventEmitter().once(String.valueOf(entry.getId()), (e) -> {
                 logger.debug("[CUI] PUT " + finalKey + " event: " + e);
                 entry.lock();
                 logger.debug("[CUI] PUT " + finalKey + " response: " + entry);
@@ -241,7 +241,7 @@ public class ClientUI implements IClientImpl {
 //            client.multiGet(keys);
 
             ClientRequestQueueEntry<?> entry = client.multiGet(keys);
-            this.client.getEventEmmiter().once(String.valueOf(entry.getId()), (e) -> {
+            this.client.getEventEmitter().once(String.valueOf(entry.getId()), (e) -> {
                 logger.debug("[CUI] MULTIGET event: " + e);
                 entry.lock();
                 logger.debug("[CUI] MULTIGET response: " + entry);
@@ -331,7 +331,7 @@ public class ClientUI implements IClientImpl {
 
             ClientRequestQueueEntry<?> entry = client.multiPut(values);
 
-            this.client.getEventEmmiter().once(String.valueOf(entry.getId()), (e) -> {
+            this.client.getEventEmitter().once(String.valueOf(entry.getId()), (e) -> {
                 logger.debug("[CUI] MULTIPUT event: " + e);
                 entry.lock();
                 logger.debug("[CUI] MULTIPUT response: " + entry);
@@ -397,7 +397,7 @@ public class ClientUI implements IClientImpl {
             String finalKey = key;
             String finalKeyCond = keyCond;
             String finalValueCond = valueCond;
-            this.client.getEventEmmiter().once(String.valueOf(entry.getId()), (e) -> {
+            this.client.getEventEmitter().once(String.valueOf(entry.getId()), (e) -> {
                 logger.debug("[CUI] GETWHEN event: " + e);
                 entry.lock();
                 logger.debug("[CUI] GETWHEN response: " + entry);
