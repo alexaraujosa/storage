@@ -30,7 +30,16 @@ tasks.register('runClient', JavaExec) {
     mainClass.set('com.sd56.client.Client')
     classpath = sourceSets.main.runtimeClasspath
     standardInput = System.in
+    args("--debug", "3")
 }
+
+tasks.register('runClientheadless', JavaExec) {
+    mainClass.set('com.sd56.client.Client')
+    classpath = sourceSets.main.runtimeClasspath
+    standardInput = System.in
+    args("--headless", "--datafile=tmp/headless/get.sddat", "--debug")
+}
+
 
 test {
     useJUnitPlatform()
