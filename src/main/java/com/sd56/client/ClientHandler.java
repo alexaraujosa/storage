@@ -73,7 +73,7 @@ public class ClientHandler implements Runnable {
                                     logger.debug("[AUTH] DATAGRAM: " + resAuth);
 
                                     if (!resAuth.getValidation()) {
-                                        message.setResponse("Invalid credentials.");
+                                        message.setResponse("Invalid credentials or user already logged in.");
                                         message.setSuccess(false);
                                         break;
                                     }

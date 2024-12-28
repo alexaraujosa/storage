@@ -1,16 +1,22 @@
 package com.sd56.server;
 
+import com.sd56.common.connectors.TaggedConnection;
+import com.sd56.common.datagram.Datagram;
 import com.sd56.common.datagram.ResponseGetWhenDatagram;
+import com.sd56.common.util.LockedResource;
 
 import java.io.IOException;
+import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class DatabaseManager {
-    private final HashMap<String, String> users;
+    private final HashMap<String, Map.Entry<String, Boolean>> users;
     private final HashMap<String, byte[]> db;
     private final Queue<GetWhenTuple> getWhenQueue;
     private final ReentrantLock l;
@@ -22,7 +28,7 @@ public class DatabaseManager {
         this.l = new ReentrantLock();
     }
 
-    public HashMap<String, String> getUsers() { return this.users; }
+    public HashMap<String, Map.Entry<String, Boolean>> getUsers() { return this.users; }
     public HashMap<String, byte[]> getDb() { return this.db; }
     public Queue<GetWhenTuple> getGetWhenQueue() { return this.getWhenQueue; }
 
@@ -30,12 +36,14 @@ public class DatabaseManager {
         l.lock();
         try {
             // Wrong password
-            if (users.containsKey(username) && !users.get(username).equals(password))
+            if (users.containsKey(username) && !users.get(username).getKey().equals(password))
+                return false;
+            
+            // User account in usage
+            if (users.containsKey(username) && users.get(username).getValue())
                 return false;
 
-            // New account
-            if (!users.containsKey(username))
-                users.put(username, password);
+            users.put(username, new AbstractMap.SimpleEntry<>(password, true));
             
             return true;
         } finally {
@@ -71,7 +79,14 @@ public class DatabaseManager {
             if(g.getFlag() == 1){
                 byte[] value = this.getDb().get(g.getKey());
                 ResponseGetWhenDatagram resGetWhen = new ResponseGetWhenDatagram(value);
-                g.getTaggedConnection().send(g.getFrame().tag, resGetWhen.serialize());
+                LockedResource<LinkedList<Map.Entry<TaggedConnection.Frame, Datagram>>, ?> responses = g.getResponses();
+                responses.lock();
+                try {
+                    responses.getResource().add(new AbstractMap.SimpleEntry<>(g.getFrame(), resGetWhen));
+                } finally {
+                    responses.unlock();
+                }
+                // g.getResponses().send(g.getFrame().tag, resGetWhen.serialize());
 
                 this.removeGetWhenTple(g);
             }
@@ -112,6 +127,16 @@ public class DatabaseManager {
         l.lock();
         try {
             return this.db.get(key);
+        } finally {
+            l.unlock();
+        }
+    }
+
+    public void disconnect(String username) {
+        l.lock();
+        try {
+            if (!this.users.containsKey(username)) return;
+            users.put(username, new AbstractMap.SimpleEntry<>(users.get(username).getKey(), false));
         } finally {
             l.unlock();
         }

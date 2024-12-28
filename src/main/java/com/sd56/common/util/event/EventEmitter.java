@@ -47,6 +47,7 @@ public class EventEmitter {
 
     public void emit(Event event) {
         this.listeners.autoExec((lr) -> {
+            if (!lr.getResource().containsKey(event.name())) return null;
             for (EventListener listener : lr.getResource().get(event.name())) {
                 listener.onEvent(event);
             }
