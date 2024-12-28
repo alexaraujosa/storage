@@ -1,0 +1,14 @@
+################################
+# Test case for the PUT method #
+################################
+
+# Authentication
+USERNAME=client1
+PASSWORD=1234
+
+# Request method. Can be GET, PUT, MULTIGET, MULTIPUT, GETWHEN
+METHOD=PUT
+
+# Key or item to fetch
+[PAYLOAD]
+def=456
