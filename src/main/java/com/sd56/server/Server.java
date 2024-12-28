@@ -20,9 +20,9 @@ import com.sd56.common.util.LockedResource;
 public class Server {
     private final static int PORT = 1337;
     private final AtomicInteger currentSessions;
-    private final LockedResource<LinkedList<Socket>> clients;
-    private final LockedResource<LinkedList<Map.Entry<TaggedConnection, TaggedConnection.Frame>>> requests;
-    private final LockedResource<LinkedList<GetWhenTuple>> getWhen;
+    private final LockedResource<LinkedList<Socket>, ?> clients;
+    private final LockedResource<LinkedList<Map.Entry<TaggedConnection, TaggedConnection.Frame>>, ?> requests;
+    private final LockedResource<LinkedList<GetWhenTuple>, ?> getWhen;
     private final DatabaseManager dbManager;
     private final Thread[] sessionWorkers;
     private final Thread[] requestWorkers;
@@ -42,9 +42,9 @@ public class Server {
         this.notEmpty = this.lock.newCondition();
     }
 
-    public LockedResource<LinkedList<Socket>> getClients() { return this.clients; }
-    public LockedResource<LinkedList<Map.Entry<TaggedConnection, TaggedConnection.Frame>>> getRequests() { return this.requests; }
-    public LockedResource<LinkedList<GetWhenTuple>> getWhenLR() { return this.getWhen; }
+    public LockedResource<LinkedList<Socket>, ?> getClients() { return this.clients; }
+    public LockedResource<LinkedList<Map.Entry<TaggedConnection, TaggedConnection.Frame>>, ?> getRequests() { return this.requests; }
+    public LockedResource<LinkedList<GetWhenTuple>, ?> getWhenLR() { return this.getWhen; }
     public DatabaseManager getDbManager() { return this.dbManager; }
     public ReentrantLock getLock() { return this.lock; }
     public Condition getNotEmptyCond() { return this.notEmpty; }

@@ -25,13 +25,13 @@ import com.sd56.server.DatabaseManager;
 import com.sd56.server.GetWhenTuple;
 
 public class RequestHandler implements Runnable {
-    private final LockedResource<LinkedList<Map.Entry<TaggedConnection, TaggedConnection.Frame>>> requests;
-    private final LockedResource<LinkedList<GetWhenTuple>> getWhen;
+    private final LockedResource<LinkedList<Map.Entry<TaggedConnection, TaggedConnection.Frame>>, ?> requests;
+    private final LockedResource<LinkedList<GetWhenTuple>, ?> getWhen;
     private final DatabaseManager dbManager;
 
     public RequestHandler(
-        LockedResource<LinkedList<Map.Entry<TaggedConnection, TaggedConnection.Frame>>> requests,
-        LockedResource<LinkedList<GetWhenTuple>> getWhen,
+        LockedResource<LinkedList<Map.Entry<TaggedConnection, TaggedConnection.Frame>>, ?> requests,
+        LockedResource<LinkedList<GetWhenTuple>, ?> getWhen,
         DatabaseManager dbManager
     ) {
         this.requests = requests;

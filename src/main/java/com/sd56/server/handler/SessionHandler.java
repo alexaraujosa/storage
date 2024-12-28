@@ -26,14 +26,14 @@ import com.sd56.server.DatabaseManager;
 public class SessionHandler implements Runnable {
     private final AtomicInteger currentSessions;
     private final DatabaseManager dbManager;
-    private final LockedResource<LinkedList<Map.Entry<TaggedConnection, TaggedConnection.Frame>>> requests;
-    private final LockedResource<LinkedList<Socket>> clients;
+    private final LockedResource<LinkedList<Map.Entry<TaggedConnection, TaggedConnection.Frame>>, ?> requests;
+    private final LockedResource<LinkedList<Socket>, ?> clients;
 
     public SessionHandler(
         AtomicInteger currentSessions,
         DatabaseManager dbManager,
-        LockedResource<LinkedList<Map.Entry<TaggedConnection, TaggedConnection.Frame>>> requests,
-        LockedResource<LinkedList<Socket>> clients
+        LockedResource<LinkedList<Map.Entry<TaggedConnection, TaggedConnection.Frame>>, ?> requests,
+        LockedResource<LinkedList<Socket>, ?> clients
     ) {
         this.currentSessions = currentSessions;
         this.dbManager = dbManager;
