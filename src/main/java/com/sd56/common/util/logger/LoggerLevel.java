@@ -2,6 +2,9 @@ package com.sd56.common.util.logger;
 
 import java.util.List;
 
+/**
+ * This record represents a logging level, which is provides an order of severity and a format to be used when logging.
+ */
 public record LoggerLevel(LEVEL level, String format) {
     public enum LEVEL {
         _SILENT,

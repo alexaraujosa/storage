@@ -7,30 +7,20 @@ import com.sd56.common.exceptions.SDException;
 import com.sd56.common.util.event.Event;
 import com.sd56.common.util.logger.Logger;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public class ClientHandler implements Runnable {
     private final int tag;
-//    private final LockedResource<Object> lr; // Used to signal the main thread for responses.
-    private Client client;
-    private Logger logger; // Here for convenience
+    private final Client client;
+    private final Logger logger; // Here for convenience
 
 
     public ClientHandler(int tag, Client mainClient) {
         this.tag = tag;
         this.client = mainClient;
         this.logger = this.client.getLogger();
-//        this.lr = null;
     }
-
-//    public ClientHandler(int tag, Client mainClient, LockedResource<Object> lr) {
-//        this.tag = tag;
-//        this.client = mainClient;
-//        this.logger = this.client.getLogger();
-////        this.lr = lr;
-//    }
 
     private ClientRequestQueueEntry<Object> getMessage() {
         ProtectedMessages messagesToSend = this.client.getMessagesToSend();
@@ -45,7 +35,6 @@ public class ClientHandler implements Runnable {
             logger.debug("Removed a message from the protected Messages in thread " + this.tag);
             return messagesToSend.getMessage();
         } catch (InterruptedException e) {
-//            throw new RuntimeException(e);
             logger.debug("Thread " + this.tag + " interrupted.");
             return null;
         } finally {
@@ -93,7 +82,6 @@ public class ClientHandler implements Runnable {
                                     message.setResponse(true);
                                     break;
                                 default:
-//                                    logger.error("[AUTH] Received wrong datagram type: " + header.getType());
                                     message.autoExec(lr -> {
                                         lr.setError(
                                                 new ConnectionException("[AUTH] Received wrong datagram type: " + header.getType())
@@ -103,7 +91,6 @@ public class ClientHandler implements Runnable {
                                     break;
                             }
                         } catch (Exception e) {
-//                            logger.error("[AUTH] Error on receive: " + SDException.getStackTrace(e));
                             message.autoExec(lr -> {
                                 lr.setError(
                                         new ConnectionException("[AUTH] Error on receive: " + SDException.getStackTrace(e))
@@ -128,25 +115,6 @@ public class ClientHandler implements Runnable {
 
                         logger.debug("[WK" + this.tag + "] PUT HEADER: " + header);
 
-//                        try {
-//                            switch (header.getType()) {
-//                                case DATAGRAM_TYPE_RESPONSE_PUT:
-//                                    ResponsePutDatagram resPut = ResponsePutDatagram.deserialize(recivedBytes);
-//                                    if (!resPut.getValidation()) {
-//                                        logger.error("The operation put could not succeed.");
-//                                        return;
-//                                    }
-//                                    break;
-//                                default:
-//                                    break;
-//                            }
-//                        } catch (Exception e) {
-//                            logger.error("[PUT] Error on receive: " + SDException.getStackTrace(e));
-//                        } finally {
-//                            message.lock();
-//                            message.signalAll();
-//                            message.unlock();
-//                        }
                         try {
                             switch (header.getType()) {
                                 case DATAGRAM_TYPE_RESPONSE_PUT:
@@ -192,19 +160,6 @@ public class ClientHandler implements Runnable {
                         recivedBytes = demultiplexer.receive(this.tag);
                         header = Datagram.deserialize(recivedBytes);
 
-//                        switch (header.getType()) {
-//                            case DATAGRAM_TYPE_RESPONSE_GET:
-//                                ResponseGetDatagram resGet = ResponseGetDatagram.deserialize(recivedBytes);
-//                                if (resGet.getValue() == null) {
-//                                    System.err.println("Invalid key");
-//                                    return;
-//                                } else{
-//                                    System.out.println("Value: " + new String(resGet.getValue(), StandardCharsets.UTF_8));
-//                                }
-//                                break;
-//                            default:
-//                                break;
-//                        }
                         try {
                             switch (header.getType()) {
                                 case DATAGRAM_TYPE_RESPONSE_GET:
@@ -250,22 +205,6 @@ public class ClientHandler implements Runnable {
                         recivedBytes = demultiplexer.receive(this.tag);
                         header = Datagram.deserialize(recivedBytes);
 
-//                        switch (header.getType()) {
-//                            case DATAGRAM_TYPE_RESPONSE_MULTIGET:
-//                                ResponseMultiGetDatagram resMultiGet = ResponseMultiGetDatagram.deserialize(recivedBytes);
-//                                Map<String, byte[]> values = resMultiGet.getValues();
-//                                for (Map.Entry<String, byte[]> entry : values.entrySet()) {
-//                                    if (entry.getValue() == null) {
-//                                        System.out.println("Key doesn't exist.");
-//                                    } else {
-//                                        System.out.println("Key: " + entry.getKey() + " || Value: " + new String(entry.getValue(), StandardCharsets.UTF_8));
-//                                    }
-//                                }
-//                                break;
-//                            default:
-//                                break;
-//                        }
-
                         try {
                             switch (header.getType()) {
                                 case DATAGRAM_TYPE_RESPONSE_MULTIGET:
@@ -273,13 +212,6 @@ public class ClientHandler implements Runnable {
 
                                     Map<String, byte[]> values = resMultiGet.getValues();
                                     message.setResponse(values);
-//                                    if (resMultiGet.getValue() == null) {
-//                                        message.setResponse("Invalid key");
-//                                        message.setSuccess(false);
-//                                        return;
-//                                    } else {
-//                                        message.setResponse(new String(resGet.getValue(), StandardCharsets.UTF_8));
-//                                    }
                                     break;
                                 default:
                                     message.autoExec(lr -> {
@@ -312,22 +244,6 @@ public class ClientHandler implements Runnable {
 
                         recivedBytes = demultiplexer.receive(this.tag);
                         header = Datagram.deserialize(recivedBytes);
-//                        switch (header.getType()) {
-//                            case DATAGRAM_TYPE_RESPONSE_MULTIPUT:
-//                                ResponseMultiPutDatagram resMultiPut = ResponseMultiPutDatagram.deserialize(recivedBytes);
-//                                Map<String, Boolean> validations = resMultiPut.getValidations();
-//
-//                                for (Map.Entry<String, Boolean> entry : validations.entrySet()) {
-//                                    if (entry.getValue()) {
-//                                        System.out.println("Key '" + entry.getKey() + "' successfully added to the database.");
-//                                    } else {
-//                                        System.out.println("Key '" + entry.getKey() + "' not added to the database.");
-//                                    }
-//                                }
-//                                break;
-//                            default:
-//                                break;
-//                        }
 
                         try {
                             switch (header.getType()) {
@@ -368,21 +284,6 @@ public class ClientHandler implements Runnable {
 
                         recivedBytes = demultiplexer.receive(this.tag);
                         header = Datagram.deserialize(recivedBytes);
-                        //System.out.println("\nDATAGRAM_TYPE: " + datagram.getType());
-//                        switch (header.getType()){
-//                            case DATAGRAM_TYPE_RESPONSE_GETWHEN:
-//                                ResponseGetWhenDatagram resGetWhen = ResponseGetWhenDatagram.deserialize(recivedBytes);
-//                                //System.out.println("\nRESPONSE_GETWHEN VALUE: " + Arrays.toString(resGetWhen.getValue()));
-//                                if (resGetWhen.getValue() == null) {
-//                                    System.err.println("Invalid key");
-//                                    return;
-//                                } else{
-//                                    System.out.println("Value: " + new String(resGetWhen.getValue(), StandardCharsets.UTF_8));
-//                                }
-//                                break;
-//                            default:
-//                                break;
-//                        }
 
                         try {
                             switch (header.getType()) {

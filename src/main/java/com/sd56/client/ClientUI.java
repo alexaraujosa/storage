@@ -12,15 +12,12 @@ public class ClientUI implements IClientImpl {
     private final Scanner sc;
     private final Client client;
     private final BetterMenu menu;
-
-//    private final LockedResource<Queue<ClientRequestQueueEntry>> requestQueue; // Placed here for convenience
     private final Logger logger; // Placed here for convenience
 
     public ClientUI(Client client) {
         this.sc = new Scanner(System.in);
         this.client = client;
         this.logger = this.client.getLogger();
-//        this.requestQueue = client.getRequestQueue();
         this.menu = new BetterMenu(new String[] {
                 "Close Connection",
                 "Authentication",
@@ -37,14 +34,6 @@ public class ClientUI implements IClientImpl {
      * Coloca a interface em execução.
      */
     public void run() {
-//        try {
-//            this.client.tryConnect();
-//            System.out.println("Connection established.");
-//        } catch (Exception e) {
-//            System.out.println("Error connecting to the server: " + SDException.getStackTrace(e));
-//            return;
-//        }
-
         this.menu.setPreCondition(1, () -> !this.client.isAuthenticated());
         this.menu.setPreCondition(2, () -> this.client.isAuthenticated());
         this.menu.setPreCondition(3, () -> this.client.isAuthenticated());
@@ -120,10 +109,6 @@ public class ClientUI implements IClientImpl {
         }
 
         try {
-//            byte[] value = client.get(key);
-//            System.out.println("Value: " + new String(value, StandardCharsets.UTF_8));
-//            client.get(key);
-
             ClientRequestQueueEntry<?> entry = client.get(key);
             String finalKey = key;
             this.client.getEventEmitter().once(String.valueOf(entry.getId()), (e) -> {
@@ -164,10 +149,6 @@ public class ClientUI implements IClientImpl {
         }
 
         try {
-//            boolean success = client.put(key, value);
-//            if (!success) System.out.println("Invalid key.");
-//            client.put(key, value);
-
             ClientRequestQueueEntry<?> entry = client.put(key, value);
             String finalKey = key;
             this.client.getEventEmitter().once(String.valueOf(entry.getId()), (e) -> {
@@ -185,19 +166,6 @@ public class ClientUI implements IClientImpl {
                 }
                 entry.unlock();
             });
-//            entry.lock();
-//            entry.await();
-//            logger.debug("[CUI] PUT " + key + ":" + value + ": " + entry);
-//            if (!entry.succeeded()) {
-//                if (entry.getError() != null) {
-//                    throw entry.getError();
-//                } else {
-//                    System.out.println(entry.getResponse());
-//                }
-//            } else {
-//                System.out.println("Authentication successful.");
-//            }
-//            entry.unlock();
         } catch (Exception e) {
             System.out.println("Error putting value: "+ SDException.getStackTrace(e));
         }
@@ -227,19 +195,6 @@ public class ClientUI implements IClientImpl {
         }
 
         try {
-//            Map<String, Nullable<byte[]>> values = client.multiGet(keys);
-//            for (Map.Entry<String, Nullable<byte[]>> entry : values.entrySet()) {
-//                if (entry.getValue().isNull()) {
-//                    System.out.println("Key " + entry.getKey() + " doesn't exist.");
-//                } else {
-//                    byte[] _value = entry.getValue().getOrDefault(new byte[0]);
-//                    String value = _value.length > 0 ? new String(_value, StandardCharsets.UTF_8) : "null";
-//
-//                    System.out.println("Key: " + entry.getKey() + " | Value: " + value);
-//                }
-//            }
-//            client.multiGet(keys);
-
             ClientRequestQueueEntry<?> entry = client.multiGet(keys);
             this.client.getEventEmitter().once(String.valueOf(entry.getId()), (e) -> {
                 logger.debug("[CUI] MULTIGET event: " + e);
@@ -269,20 +224,6 @@ public class ClientUI implements IClientImpl {
                 }
                 entry.unlock();
             });
-
-//            entry.lock();
-//            entry.await();
-//            logger.debug("[CUI] Authentication response: " + entry);
-//            if (!entry.succeeded()) {
-//                if (entry.getError() != null) {
-//                    throw entry.getError();
-//                } else {
-//                    System.out.println(entry.getResponse());
-//                }
-//            } else {
-//                System.out.println("Authentication successful.");
-//            }
-//            entry.unlock();
         } catch (Exception e) {
             System.out.println("Error getting values: " + SDException.getStackTrace(e));
         }
@@ -319,16 +260,6 @@ public class ClientUI implements IClientImpl {
         }
 
         try {
-//            Map<String, Boolean> validations = client.multiPut(values);
-//            for (Map.Entry<String, Boolean> entry : validations.entrySet()) {
-//                if (entry.getValue()) {
-//                    System.out.println("Key '" + entry.getKey() + "' successfully added to the database.");
-//                } else {
-//                    System.out.println("Key '" + entry.getKey() + "' not added to the database.");
-//                }
-//            }
-//            client.multiPut(values);
-
             ClientRequestQueueEntry<?> entry = client.multiPut(values);
 
             this.client.getEventEmitter().once(String.valueOf(entry.getId()), (e) -> {
@@ -385,14 +316,6 @@ public class ClientUI implements IClientImpl {
         }
 
         try {
-//            client.getWhen(key, keyCond, valueCond.getBytes(StandardCharsets.UTF_8));
-//            byte[] value = client.getWhen(key, keyCond, valueCond.getBytes(StandardCharsets.UTF_8));
-//            if (value == null) {
-//                System.err.println("Invalid key");
-//            } else {
-//                System.out.println("Value: " + new String(value, StandardCharsets.UTF_8));
-//            }
-
             ClientRequestQueueEntry<?> entry = client.getWhen(key, keyCond, valueCond.getBytes(StandardCharsets.UTF_8));
             String finalKey = key;
             String finalKeyCond = keyCond;

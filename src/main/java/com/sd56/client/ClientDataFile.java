@@ -58,7 +58,7 @@ public record ClientDataFile(String method, String username, String password, Ma
                     if ((int)payloadData.getOrDefaultMeta(DATA_FILE_META_ARRAY_LEN_KEY, 2) > 1)
                         throw new DataFileException("Method does not support array payloads with more than one element.");
 
-                    MetaMap<String, String> _payloadData = new MetaHashMap();
+                    MetaMap<String, String> _payloadData = new MetaHashMap<>();
                     _payloadData.put(DATA_FILE_INLINABLE_SECTION_VALUE, payloadData.get("0"));
                     payloadData = _payloadData;
                 } else {
@@ -75,7 +75,7 @@ public record ClientDataFile(String method, String username, String password, Ma
                     if ((int)controlData.getOrDefaultMeta(DATA_FILE_META_ARRAY_LEN_KEY, 2) > 1)
                         throw new DataFileException("Method does not support array controls with more than one element.");
 
-                    MetaMap<String, String> _controlData = new MetaHashMap();
+                    MetaMap<String, String> _controlData = new MetaHashMap<>();
                     _controlData.put(DATA_FILE_INLINABLE_SECTION_VALUE, controlData.get("0"));
                     controlData = _controlData;
                 }

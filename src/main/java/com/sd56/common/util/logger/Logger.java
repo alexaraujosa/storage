@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * This class is an implementation of a logger, which allows for message logging with different configurable levels of severity.
+ */
 public class Logger {
     private static Logger globalLogger;
 
@@ -41,6 +44,11 @@ public class Logger {
         this.printCaller = options.printCaller();
     }
 
+    /**
+     * Sets the current logging level. Only messages with a level equal to or higher than the current level will be
+     * logged, while messages with a lower level will be ignored.
+     * @param level A level contained in the level order list.
+     */
     public void setLevel(LoggerLevel.LEVEL level) {
         if (this.levelOrder.contains(level)) {
             this.currentLevel = level;
@@ -94,6 +102,9 @@ public class Logger {
         System.out.println(loggerLevel.format() + formatterMessage + "\u001B[0m");
     }
 
+    /**
+     * Returns the global logger instance. If no global logger instance exists, a new one is created.
+     */
     public static Logger getGlobalLogger() {
         if (globalLogger == null) {
             globalLogger = new Logger();
@@ -102,6 +113,10 @@ public class Logger {
         return globalLogger;
     }
 
+    /**
+     * Sets the global logger instance to the specified logger.
+     * @param logger A Logger instance to set as the global logger.
+     */
     public static void setGlobalLogger(Logger logger) {
         globalLogger = logger;
     }

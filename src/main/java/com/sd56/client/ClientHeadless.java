@@ -17,40 +17,19 @@ import static com.sd56.client.ClientDataFile.*;
 
 public class ClientHeadless implements IClientImpl {
     private final ClientDataFile data;
-    private final LockedResource<Object, ?> lr; // I'm abusing the LockedResource's condition because I'm a lazy fuck.
-    private Client client;
+    private final Client client;
 
     public ClientHeadless(Client client, String path) throws FileNotFoundException, DataFileException {
         this.client = client;
         this.data = ClientDataFile.readDataFile(path);
-        this.lr = new LockedResource<>(null);
-    }
-
-    public LockedResource<Object, ?> getLockedResource() {
-        return this.lr;
     }
     
     public void run() {
         Logger logger = this.client.getLogger();
-
         logger.debug("CDF: " + this.data.toString());
-
-//        try {
-//            logger.debug("Connecting to the server...");
-//            this.client.tryConnect();
-//            logger.success("Connection established.");
-//        } catch (Exception e) {
-//            logger.error("Error connecting to the server: " + SDException.getStackTrace(e));
-//            return;
-//        }
 
         logger.info("Authenticating with credentials " + this.data.username() + ":" + this.data.password());
         try {
-//            if (!this.client.authenticate(this.data.username(), this.data.password())) {
-//                logger.error("Authentication failed: Invalid credentials.");
-//                return;
-//            }
-
             logger.success("Authentication successful.");
         } catch (Exception e) {
             logger.error("Authentication failed: " + SDException.getStackTrace(e));
@@ -81,8 +60,6 @@ public class ClientHeadless implements IClientImpl {
             default:
                 logger.error("Invalid method: " + this.data.method());
         }
-
-//        fuckingDie();
     }
 
     private void get() {
@@ -96,23 +73,6 @@ public class ClientHeadless implements IClientImpl {
 
             this.client.getEventEmitter().once(String.valueOf(entry.getId()), (e) -> {
                 entry.lock();
-//                byte[] value = entry.exec(r -> r);
-//                if (value == null) {
-//                    logger.error("GET " + key + " FAILED");
-//                    return;
-//                }
-//
-//                logger.info("GET " + key + " STARTUP SUCCESS");
-//                logger.debug("GET PAYLOAD: " + key + " -> " + new String(value, StandardCharsets.UTF_8));
-//                logger.debug("GET CONTROL: " + key + " -> " + new String(control, StandardCharsets.UTF_8));
-//
-//                boolean matchControl = Arrays.equals(value, control);
-//                if (matchControl) {
-//                    logger.success("GET " + key + " MATCH");
-//                } else {
-//                    logger.error("GET " + key + " MISMATCH");
-//                }
-
                 if (!entry.succeeded()) {
                     if (entry.getError() != null) {
                         logger.error("GET " + key + " FAILED: " + SDException.getStackTrace(entry.getError()));
@@ -152,14 +112,6 @@ public class ClientHeadless implements IClientImpl {
 
         logger.info("PUT " + key + ":" + value + " STARTUP");
         try {
-//            boolean validation = this.client.put(key, value);
-//            if (!validation) {
-//                logger.error("PUT " + key + " FAILED");
-//                return;
-//            }
-//
-//            logger.success("PUT " + key + " SUCCESS");
-
             ClientRequestQueueEntry<Object> entry = this.client.put(key, value);
 
             this.client.getEventEmitter().once(String.valueOf(entry.getId()), (e) -> {
@@ -197,27 +149,6 @@ public class ClientHeadless implements IClientImpl {
 
         logger.info("MULTIGET " + payload.values() + " STARTUP");
         try {
-//            Map<String, Nullable<byte[]>> values = this.client.multiGet(new HashSet<>(payload.values()));
-//            for (Map.Entry<String, Nullable<byte[]>> entry : values.entrySet()) {
-//                String key = entry.getKey();
-//                Nullable<byte[]> value = entry.getValue();
-//                String controlValue = control.get(key);
-//
-//                if (value.isNull()) {
-//                    logger.error("MULTIGET " + key + " FAILED: Key does not exist.");
-//                    continue;
-//                }
-//
-//                logger.debug("MULTIGET PAYLOAD: " + key + " -> " + new String(value.get(), StandardCharsets.UTF_8));
-//                logger.debug("MULTIGET CONTROL: " + key + " -> " + controlValue);
-//
-//                boolean matchControl = Arrays.equals(value.get(), controlValue.getBytes(StandardCharsets.UTF_8));
-//                if (matchControl) {
-//                    logger.success("MULTIGET " + key + " MATCH");
-//                } else {
-//                    logger.error("MULTIGET " + key + " MISMATCH");
-//                }
-//            }
             ClientRequestQueueEntry<Object> entry = this.client.multiGet(new HashSet<>(payload.values()));
 
             this.client.getEventEmitter().once(String.valueOf(entry.getId()), (e) -> {
@@ -271,30 +202,6 @@ public class ClientHeadless implements IClientImpl {
 
         logger.info("MULTIPUT " + payload + " STARTUP");
         try {
-//            Map<String, Boolean> validation = this.client.multiPut(
-//                    payload
-//                            .entrySet()
-//                            .stream()
-//                            .collect(Collectors.toMap(
-//                                    Map.Entry::getKey,
-//                                    e -> e.getValue().getBytes(StandardCharsets.UTF_8)
-//                            ))
-//            );
-//
-//            for (Map.Entry<String, Boolean> entry : validation.entrySet()) {
-//                String key = entry.getKey();
-//                boolean value = entry.getValue();
-//
-//                if (!value) {
-//                    logger.error("MULTIPUT " + key + " FAILED: Key does not exist.");
-//                    continue;
-//                }
-//
-//                logger.success("MULTIPUT " + key + " SUCCESS");
-//            }
-//
-//            logger.success("MULTIPUT SUCCESS");
-
             ClientRequestQueueEntry<?> entry = client.multiPut(
                     payload
                             .entrySet()
